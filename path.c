@@ -2,6 +2,8 @@
 #include <string.h>
 
 #include "path.h"
+#include "file.h"
+#include "util.h"
 
 path_entry_t* path_construct_entry(char* directory) {
   path_entry_t* entry = malloc(sizeof(path_entry_t));
@@ -20,7 +22,7 @@ path_t* path_parse(char* path_s) {
   char* result = strtok_r(path_s, delims, &tok_state);
   if (result) {
     path->head = path_construct_entry(result);
-    num_entries = 1;
+    num_entries++;
     total_string_length += strlen(result);
   }
   path_entry_t* prev = path->head;
@@ -49,6 +51,7 @@ void path_clean(path_t* path) {
     prev = existing;
     for (curr = existing->next; curr; curr = curr->next) {
       if (strcmp(existing->directory, curr->directory) == 0) {
+        print_verbose("Removing duplicate directory: %s\n", curr->directory);
         path->total_string_length -= strlen(curr->directory) + 1;
         path->num_entries--;
         prev->next = curr->next;
@@ -57,6 +60,25 @@ void path_clean(path_t* path) {
       } else {
         prev = curr;
       }
+    }
+  }
+}
+
+void path_warnings(path_t* path) {
+  path_entry_t* curr;
+  for (curr = path->head; curr; curr = curr->next) {
+    if (file_exists(curr->directory) != 0) {
+      if (directory_is_absolute(curr->directory) != 0) {
+        print_warning("Directory `%s` is not an absolute directory and does not exist\n", curr->directory);
+      } else {
+        print_warning("Directory `%s` does not exist\n", curr->directory);
+      }
+    } else if (directory_exists(curr->directory) != 0) {
+      print_warning("File `%s` is not a directory\n", curr->directory);
+    } else if (directory_readable(curr->directory) != 0) {
+      print_warning("Directory `%s` not readable\n", curr->directory);
+    } else if (directory_contains_executable_files(curr->directory) != 0) {
+      print_warning("Directory `%s` contains no executable files\n", curr->directory);
     }
   }
 }

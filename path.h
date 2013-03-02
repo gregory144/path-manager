@@ -14,6 +14,8 @@ path_t* path_parse(char* pathStr);
 
 void path_clean(path_t* path);
 
+void path_warnings(path_t* path);
+
 char* path_to_string(path_t* path);
 
 void path_free(path_t *path);
