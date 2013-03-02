@@ -7,22 +7,19 @@
 int main() {
   // adds PATH entry to .bashrc
   char* origPath = getenv("PATH");
+  int pathLen = 0;
+  char* pathStr = "";
   if (origPath != NULL) {
-    int pathLen = strlen(origPath);
-    char* pathStr = strndup(origPath, pathLen);
-    path_t* path = parsePath(pathStr);
-    path_entry_t* currEntry;
-    for (currEntry = path->firstEntry; currEntry != NULL; currEntry = currEntry->next) {
-      printf("Path Entry: %s\n", currEntry->directory);
-    }
-    char* currPath = getPath(path);
-    printf("The current path is: %s\n", currPath);
-    free(currPath);
-    freePath(path);
-    free(pathStr);
-  } else {
-    printf("PATH not set.\n");
+    pathLen = strlen(origPath);
+    pathStr = strndup(origPath, pathLen);
   }
+  path_t* path = parsePath(pathStr);
+  cleanPath(path);
+  char* currPath = getPath(path);
+  printf("%s\n", currPath);
+  free(currPath);
+  freePath(path);
+  free(pathStr);
   return 0;
 }
 
@@ -65,10 +62,22 @@ path_t* parsePath(char* pathStr) {
 
 void cleanPath(path_t* path) {
   // remove duplicate path entries
+  path_entry_t* existingEntry;
   path_entry_t* currEntry;
-  for (currEntry = path->firstEntry; currEntry; currEntry = currEntry->next) {
-    /*if (strcmp(iEntry, jEntry) == 0) {*/
-    /*}*/
+  path_entry_t* prevEntry;
+  for (existingEntry = path->firstEntry; existingEntry; existingEntry = existingEntry->next) {
+    prevEntry = existingEntry;
+    for (currEntry = existingEntry->next; currEntry; currEntry = currEntry->next) {
+      if (strcmp(existingEntry->directory, currEntry->directory) == 0) {
+        path->totalStringLength -= strlen(currEntry->directory) + 1;
+        path->numEntries--;
+        prevEntry->next = currEntry->next;
+        free(currEntry);
+        currEntry = prevEntry;
+      } else {
+        prevEntry = currEntry;
+      }
+    }
   }
 }
 
