@@ -1,104 +1,84 @@
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "path.h"
 
-int main() {
-  // adds PATH entry to .bashrc
-  char* origPath = getenv("PATH");
-  int pathLen = 0;
-  char* pathStr = "";
-  if (origPath != NULL) {
-    pathLen = strlen(origPath);
-    pathStr = strndup(origPath, pathLen);
-  }
-  path_t* path = parsePath(pathStr);
-  cleanPath(path);
-  char* currPath = getPath(path);
-  printf("%s\n", currPath);
-  free(currPath);
-  freePath(path);
-  free(pathStr);
-  return 0;
-}
-
-int countOccurences(char* path, char c) {
-  int i, occurrences = 0;
-  for (i = 1; path[i]; i++) {
-    if (path[i] == c) {
-      occurrences++;
-    }
-  }
-  return occurrences;
-}
-
-path_entry_t* constructPathEntry(char* directory) {
+path_entry_t* path_construct_entry(char* directory) {
   path_entry_t* entry = malloc(sizeof(path_entry_t));
   entry->directory = directory;
   entry->next = NULL;
   return entry;
 }
 
-path_t* parsePath(char* pathStr) {
+path_t* path_parse(char* path_s) {
   path_t* path = malloc(sizeof(path_t));
   char delims[] = ":";
-  path->numEntries = countOccurences(pathStr, delims[0]) + 1;
-  path->totalStringLength = strlen(pathStr);
+  int num_entries = 0;
+  int total_string_length = 0;
 
-  char* result = strtok(pathStr, delims);
-  path->firstEntry = constructPathEntry(result);
-  path_entry_t* prevEntry = path->firstEntry;
+  char* tok_state;
+  char* result = strtok_r(path_s, delims, &tok_state);
+  if (result) {
+    path->head = path_construct_entry(result);
+    num_entries = 1;
+    total_string_length += strlen(result);
+  }
+  path_entry_t* prev = path->head;
   while (result) {
-    result = strtok(NULL, delims);
+    result = strtok_r(NULL, delims, &tok_state);
     if (result) {
-      path_entry_t* nextEntry = constructPathEntry(result);
-      prevEntry->next = nextEntry;
-      prevEntry = nextEntry;
+      path_entry_t* next = path_construct_entry(result);
+      num_entries++;
+      total_string_length += strlen(result);
+      prev->next = next;
+      prev = next;
     }
   }
+  path->num_entries = num_entries;
+  total_string_length += num_entries - 1; // for ':' separators
+  path->total_string_length = total_string_length;
   return path;
 }
 
-void cleanPath(path_t* path) {
+void path_clean(path_t* path) {
   // remove duplicate path entries
-  path_entry_t* existingEntry;
-  path_entry_t* currEntry;
-  path_entry_t* prevEntry;
-  for (existingEntry = path->firstEntry; existingEntry; existingEntry = existingEntry->next) {
-    prevEntry = existingEntry;
-    for (currEntry = existingEntry->next; currEntry; currEntry = currEntry->next) {
-      if (strcmp(existingEntry->directory, currEntry->directory) == 0) {
-        path->totalStringLength -= strlen(currEntry->directory) + 1;
-        path->numEntries--;
-        prevEntry->next = currEntry->next;
-        free(currEntry);
-        currEntry = prevEntry;
+  path_entry_t* existing;
+  path_entry_t* curr;
+  path_entry_t* prev;
+  for (existing = path->head; existing; existing = existing->next) {
+    prev = existing;
+    for (curr = existing->next; curr; curr = curr->next) {
+      if (strcmp(existing->directory, curr->directory) == 0) {
+        path->total_string_length -= strlen(curr->directory) + 1;
+        path->num_entries--;
+        prev->next = curr->next;
+        free(curr);
+        curr = prev;
       } else {
-        prevEntry = currEntry;
+        prev = curr;
       }
     }
   }
 }
 
-char* getPath(path_t* path) {
-  char* pathStr = calloc(path->totalStringLength + 1, sizeof(char));
-  path_entry_t* currEntry;
-  for (currEntry = path->firstEntry; currEntry; currEntry = currEntry->next) {
-    strncat(pathStr, currEntry->directory, strlen(currEntry->directory));
-    if (currEntry->next) {
+char* path_to_string(path_t* path) {
+  char* pathStr = calloc(path->total_string_length + 1, sizeof(char));
+  path_entry_t* curr;
+  for (curr = path->head; curr; curr = curr->next) {
+    strncat(pathStr, curr->directory, strlen(curr->directory));
+    if (curr->next) {
       strncat(pathStr, ":", 1);
     }
   }
   return pathStr;
 }
 
-void freePath(path_t* path) {
-  path_entry_t* currEntry;
+void path_free(path_t* path) {
+  path_entry_t* curr;
   path_entry_t* tmpEntry;
-  for (currEntry = path->firstEntry; currEntry;) {
-    tmpEntry = currEntry;
-    currEntry = currEntry->next;
+  for (curr = path->head; curr;) {
+    tmpEntry = curr;
+    curr = curr->next;
     free(tmpEntry);
   }
   free(path);

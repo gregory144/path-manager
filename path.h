@@ -1,8 +1,8 @@
 
 typedef struct path_t {
-  int numEntries;
-  struct path_entry_t* firstEntry;
-  int totalStringLength;
+  int num_entries;
+  struct path_entry_t* head;
+  int total_string_length;
 } path_t;
 
 typedef struct path_entry_t {
@@ -10,10 +10,10 @@ typedef struct path_entry_t {
   struct path_entry_t* next;
 } path_entry_t;
 
-path_t* parsePath(char* pathStr);
+path_t* path_parse(char* pathStr);
 
-void cleanPath(path_t* path);
+void path_clean(path_t* path);
 
-char* getPath(path_t* path);
+char* path_to_string(path_t* path);
 
-void freePath(path_t *path);
+void path_free(path_t *path);
