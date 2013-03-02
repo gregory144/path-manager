@@ -11,10 +11,9 @@ int main() {
     int pathLen = strlen(origPath);
     char* pathStr = strndup(origPath, pathLen);
     path_t* path = parsePath(pathStr);
-    int i = 0;
-    while (i < path->numEntries) {
-      printf("Path Entry: %s\n", path->entries[i]);
-      i++;
+    path_entry_t* currEntry;
+    for (currEntry = path->firstEntry; currEntry != NULL; currEntry = currEntry->next) {
+      printf("Path Entry: %s\n", currEntry->directory);
     }
     char* currPath = getPath(path);
     printf("The current path is: %s\n", currPath);
@@ -37,35 +36,48 @@ int countOccurences(char* path, char c) {
   return occurrences;
 }
 
+path_entry_t* constructPathEntry(char* directory) {
+  path_entry_t* entry = malloc(sizeof(path_entry_t));
+  entry->directory = directory;
+  entry->next = NULL;
+  return entry;
+}
+
 path_t* parsePath(char* pathStr) {
   path_t* path = malloc(sizeof(path_t));
   char delims[] = ":";
   path->numEntries = countOccurences(pathStr, delims[0]) + 1;
-  path->entries = malloc(path->numEntries * sizeof(char*));
+  path->totalStringLength = strlen(pathStr);
+
   char* result = strtok(pathStr, delims);
-  int i = 0;
+  path->firstEntry = constructPathEntry(result);
+  path_entry_t* prevEntry = path->firstEntry;
   while (result) {
-    path->entries[i] = result;
     result = strtok(NULL, delims);
-    i++;
+    if (result) {
+      path_entry_t* nextEntry = constructPathEntry(result);
+      prevEntry->next = nextEntry;
+      prevEntry = nextEntry;
+    }
   }
   return path;
 }
 
-char* getPath(path_t* path) {
-  int size = 0;
-  int i = 0;
-  while (i < path->numEntries) {
-    size += strlen(path->entries[i]);
-    size++;
-    i++;
+void cleanPath(path_t* path) {
+  // remove duplicate path entries
+  path_entry_t* currEntry;
+  for (currEntry = path->firstEntry; currEntry; currEntry = currEntry->next) {
+    /*if (strcmp(iEntry, jEntry) == 0) {*/
+    /*}*/
   }
-  char* pathStr = malloc(size * sizeof(char));
-  i = 0;
-  while (i < path->numEntries) {
-    strncat(pathStr, path->entries[i], strlen(path->entries[i]));
-    i++;
-    if (i < path->numEntries) {
+}
+
+char* getPath(path_t* path) {
+  char* pathStr = calloc(path->totalStringLength + 1, sizeof(char));
+  path_entry_t* currEntry;
+  for (currEntry = path->firstEntry; currEntry; currEntry = currEntry->next) {
+    strncat(pathStr, currEntry->directory, strlen(currEntry->directory));
+    if (currEntry->next) {
       strncat(pathStr, ":", 1);
     }
   }
@@ -73,6 +85,12 @@ char* getPath(path_t* path) {
 }
 
 void freePath(path_t* path) {
-  free(path->entries);
+  path_entry_t* currEntry;
+  path_entry_t* tmpEntry;
+  for (currEntry = path->firstEntry; currEntry;) {
+    tmpEntry = currEntry;
+    currEntry = currEntry->next;
+    free(tmpEntry);
+  }
   free(path);
 }

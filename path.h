@@ -1,12 +1,20 @@
 
 typedef struct path_t {
   int numEntries;
-  char** entries;
+  struct path_entry_t* firstEntry;
+  int totalStringLength;
 } path_t;
+
+typedef struct path_entry_t {
+  char* directory;
+  struct path_entry_t* next;
+} path_entry_t;
 
 int countOccurences(char* str, char c);
 
 path_t* parsePath(char* pathStr);
+
+void cleanPath(path_t* path);
 
 char* getPath(path_t* path);
 
