@@ -7,7 +7,6 @@
 
 int main() {
   turn_verbose_on();
-  // adds PATH entry to .bashrc
   char* orig_path = getenv("PATH");
   int path_len = 0;
   char* path_s = "";
@@ -19,6 +18,10 @@ int main() {
     print_verbose("Unable to read PATH environment variable.\n");
   }
   path_t* path = path_parse(path_s);
+  path_add(path, "/home/gregory144/src");
+  path_add(path, "/home/gregory144/src2");
+  path_add(path, "/home/gregory144/src3");
+  path_rm(path, "/usr/games");
   path_clean(path);
   path_warnings(path);
   char* processed_path = path_to_string(path);

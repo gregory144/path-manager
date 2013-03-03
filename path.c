@@ -14,12 +14,12 @@ path_entry_t* path_construct_entry(char* directory) {
 
 path_t* path_parse(char* path_s) {
   path_t* path = malloc(sizeof(path_t));
-  char delims[] = ":";
   int num_entries = 0;
   int total_string_length = 0;
 
   char* tok_state;
-  char* result = strtok_r(path_s, delims, &tok_state);
+  static char delim[] = { PATH_SEPARATOR_CHAR };
+  char* result = strtok_r(path_s, delim, &tok_state);
   if (result) {
     path->head = path_construct_entry(result);
     num_entries++;
@@ -27,7 +27,7 @@ path_t* path_parse(char* path_s) {
   }
   path_entry_t* prev = path->head;
   while (result) {
-    result = strtok_r(NULL, delims, &tok_state);
+    result = strtok_r(NULL, delim, &tok_state);
     if (result) {
       path_entry_t* next = path_construct_entry(result);
       num_entries++;
@@ -37,7 +37,7 @@ path_t* path_parse(char* path_s) {
     }
   }
   path->num_entries = num_entries;
-  total_string_length += num_entries - 1; // for ':' separators
+  total_string_length += num_entries - 1; // for path separators
   path->total_string_length = total_string_length;
   return path;
 }
@@ -64,23 +64,69 @@ void path_clean(path_t* path) {
   }
 }
 
+int path_warnings_for_directory(char* dir) {
+  if (!file_exists(dir)) {
+    if (!directory_is_absolute(dir)) {
+      print_warning("Directory `%s` is not an absolute directory and does not exist\n", dir);
+    } else {
+      print_warning("Directory `%s` does not exist\n", dir);
+    }
+  } else if (!directory_exists(dir)) {
+    print_warning("File `%s` is not a directory\n", dir);
+  } else if (!directory_readable(dir)) {
+    print_warning("Directory `%s` not readable\n", dir);
+  } else if (!directory_contains_executable_files(dir)) {
+    print_warning("Directory `%s` contains no executable files\n", dir);
+  } else {
+    return 1;
+  }
+  return 0;
+}
+
 void path_warnings(path_t* path) {
   path_entry_t* curr;
   for (curr = path->head; curr; curr = curr->next) {
-    if (file_exists(curr->directory) != 0) {
-      if (directory_is_absolute(curr->directory) != 0) {
-        print_warning("Directory `%s` is not an absolute directory and does not exist\n", curr->directory);
-      } else {
-        print_warning("Directory `%s` does not exist\n", curr->directory);
-      }
-    } else if (directory_exists(curr->directory) != 0) {
-      print_warning("File `%s` is not a directory\n", curr->directory);
-    } else if (directory_readable(curr->directory) != 0) {
-      print_warning("Directory `%s` not readable\n", curr->directory);
-    } else if (directory_contains_executable_files(curr->directory) != 0) {
-      print_warning("Directory `%s` contains no executable files\n", curr->directory);
-    }
+    path_warnings_for_directory(curr->directory);
   }
+}
+
+int path_add(path_t* path, char* directory) {
+  int no_warnings = path_warnings_for_directory(directory);
+  if (no_warnings) {
+    path_entry_t* path_entry = path_construct_entry(directory);
+    path->num_entries++;
+    path->total_string_length += strlen(directory);
+    if (path->head) {
+      path->total_string_length++;
+    }
+    path_entry->next = path->head;
+    path->head = path_entry;
+  }
+  return no_warnings;
+}
+
+int path_rm(path_t* path, char* directory) {
+  path_entry_t* curr;
+  path_entry_t* prev;
+  int removed = 0;
+  for (curr = path->head; curr; curr = curr->next) {
+    if (directorycmp(directory, curr->directory) == 0) {
+      print_verbose("Removing directory from path: %s\n", directory);
+      path->total_string_length -= strlen(curr->directory);
+      if (path->num_entries > 1) path->total_string_length--;
+      path->num_entries--;
+      if (curr == path->head) {
+        path->head = curr->next;
+      } else {
+        prev->next = curr->next;
+      }
+      free(curr);
+      curr = prev;
+      removed++;
+    }
+    prev = curr;
+  }
+  return removed;
 }
 
 char* path_to_string(path_t* path) {
@@ -89,7 +135,7 @@ char* path_to_string(path_t* path) {
   for (curr = path->head; curr; curr = curr->next) {
     strncat(pathStr, curr->directory, strlen(curr->directory));
     if (curr->next) {
-      strncat(pathStr, ":", 1);
+      strncat(pathStr, (char[]) { PATH_SEPARATOR_CHAR }, 1);
     }
   }
   return pathStr;
