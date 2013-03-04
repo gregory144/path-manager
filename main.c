@@ -21,9 +21,15 @@ int main() {
   path_add(path, "/home/gregory144/src");
   path_add(path, "/home/gregory144/src2");
   path_add(path, "/home/gregory144/src3");
+  path_add(path, "test1");
+  path_add(path, "test2");
   path_rm(path, "/usr/games");
   path_clean(path);
   path_warnings(path);
+  char* searchResult = path_search(path, "exe1");
+  if (searchResult) {
+    printf("Found: %s\n", searchResult);
+  }
   char* processed_path = path_to_string(path);
   printf("%s\n", processed_path);
   free(processed_path);

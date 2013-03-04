@@ -129,13 +129,25 @@ int path_rm(path_t* path, char* directory) {
   return removed;
 }
 
+char* path_search(path_t* path, char* file) {
+  path_entry_t* curr;
+  for (curr = path->head; curr; curr = curr->next) {
+    char* fullFile = file_join(curr->directory, file);
+    if (file_is_executable(fullFile)) {
+      return fullFile;
+    }
+    free(fullFile);
+  }
+  return NULL;
+}
+
 char* path_to_string(path_t* path) {
   char* pathStr = calloc(path->total_string_length + 1, sizeof(char));
   path_entry_t* curr;
   for (curr = path->head; curr; curr = curr->next) {
     strncat(pathStr, curr->directory, strlen(curr->directory));
     if (curr->next) {
-      strncat(pathStr, (char[]) { PATH_SEPARATOR_CHAR }, 1);
+      strncat(pathStr, (char[]){ PATH_SEPARATOR_CHAR }, 1);
     }
   }
   return pathStr;
