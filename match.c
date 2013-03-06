@@ -34,8 +34,8 @@ double best_match_metric(char* a, char* b) {
 int compare_matches(const void *a, const void *b) {
   match_t* aMatch = (match_t*)a;
   match_t* bMatch = (match_t*)b;
-  if (aMatch->metric == bMatch->metric) return 0;
-  return aMatch->metric < bMatch->metric ? 1 : -1;
+  if (aMatch->metric == bMatch->metric) return bMatch->file->executable - aMatch->file->executable;
+  return (bMatch->metric - aMatch->metric) * 100;
 }
 
 match_t* find_best_matches(char* needle, file_list_t* haystack) {
@@ -44,7 +44,7 @@ match_t* find_best_matches(char* needle, file_list_t* haystack) {
   int haystack_size = 0;
   for (entry = haystack; entry; entry = entry->next, haystack_size++);
   print_verbose("Checking %d files\n", haystack_size);
-  matches = malloc(haystack_size * sizeof(match_t));
+  matches = calloc(haystack_size, sizeof(match_t));
 
   int i;
   for (entry = haystack, i = 0; entry; entry = entry->next, i++) {

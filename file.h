@@ -8,6 +8,8 @@
 typedef struct file_list_t {
   char* directory;
   char* filename;
+  char* full_path;
+  int executable;
   struct file_list_t* next;
 } file_list_t;
 

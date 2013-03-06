@@ -131,10 +131,14 @@ int main(int argc, char **argv) {
         match_t* matches = find_best_matches(entry->val, files);
         match_t* currMatch;
         int i;
-        for (i = 0; i < 10 * sizeof(match_t); i += sizeof(match_t)) {
+        for (i = 0; i < 10; i++) {
           currMatch = &matches[i];
-          if (currMatch->metric > 0.4) {
-            printf("almost: %s%c%s\n", currMatch->file->directory, DIR_SEPARATOR_CHAR, currMatch->file->filename);
+          if (currMatch && currMatch->metric > 0.4) {
+            printf("almost: %s", currMatch->file->full_path);
+            if (!currMatch->file->executable) {
+              printf(" (not executable)");
+            }
+            printf("\n");
           }
         }
         free(matches);
