@@ -83,3 +83,41 @@ int directorycmp(char* dir1, char* dir2) {
   }
   return strcmp(dir1, dir2);
 }
+
+file_list_t* files_in_directories(node_t* directories) {
+  file_list_t* files = NULL;
+  file_list_t* tail = NULL;
+  file_list_t* new_file = NULL;
+  node_t* curr = NULL;
+  for (curr = directories; curr; curr = curr->next) {
+    DIR *dir = opendir(curr->val);
+    struct dirent *dir_entry;
+    if (dir) {
+      while ((dir_entry = readdir(dir)) != NULL) {
+        if (!directory_exists(dir_entry->d_name)) { // make sure it is not a directory
+          new_file = malloc(sizeof(file_list_t));
+          new_file->next = NULL;
+          new_file->directory = curr->val;
+          new_file->filename = strdup(dir_entry->d_name);
+          if (!files) files = new_file;
+          if (tail) tail->next = new_file;
+          tail = new_file;
+        }
+      }
+      closedir(dir);
+    }
+  }
+  return files;
+}
+
+void free_file_list(file_list_t* files) {
+  file_list_t* entry;
+  file_list_t* tmp;
+
+  for (entry = files; entry;) {
+    tmp = entry;
+    entry = entry->next;
+    free(tmp->filename);
+    free(tmp);
+  }
+}

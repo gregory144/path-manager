@@ -1,6 +1,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "util.h"
 
@@ -39,19 +40,18 @@ void print_warning(char* s, ...) {
   }
 }
 
-void free_nodes(node_t* node) {
+void free_nodes_and_vals(node_t* node) {
+  free_nodes(node, 1);
+}
+
+void free_nodes(node_t* node, int freeVals) {
   node_t* entry;
   node_t* tmp;
 
   for (entry = node; entry;) {
     tmp = entry;
     entry = entry->next;
-    free(tmp->val);
+    if (freeVals) free(tmp->val);
     free(tmp);
   }
-}
-
-node_t* find_best_matches(char* needle, node_t* haystack) {
-  // not implemented yet
-  return NULL;
 }

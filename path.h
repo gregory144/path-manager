@@ -1,3 +1,8 @@
+#ifndef PATH_H
+#define PATH_H
+
+#include "util.h"
+
 #define PATH_SEPARATOR_CHAR ':'
 
 typedef struct path_t {
@@ -23,6 +28,10 @@ int path_rm(path_t* path, char* directory);
 
 char* path_search(path_t* path, char* file);
 
+node_t* path_directories(path_t* path);
+
 char* path_to_string(path_t* path);
 
 void path_free(path_t *path);
+
+#endif

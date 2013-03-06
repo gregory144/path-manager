@@ -1,3 +1,5 @@
+#ifndef UTIL_H
+#define UTIL_H
 
 typedef struct node_t {
   struct node_t* next;
@@ -14,7 +16,8 @@ void print_verbose(char* s, ...);
 
 void print_warning(char* s, ...);
 
-void free_nodes(node_t* node);
+void free_nodes_and_vals(node_t* node);
 
-node_t* find_best_matches(char* needle, node_t* haystack);
+void free_nodes(node_t* node, int freeVals);
 
+#endif

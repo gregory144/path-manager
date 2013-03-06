@@ -6,6 +6,8 @@
 
 #include "path.h"
 #include "util.h"
+#include "file.h"
+#include "match.h"
 
 void display_usage() {
   printf("Usage: path\n");
@@ -80,9 +82,9 @@ int main(int argc, char **argv) {
       default:
       case 'h':
       case '?':
-        free_nodes(directoriesToAdd);
-        free_nodes(directoriesToRemove);
-        free_nodes(filesToSearch);
+        free_nodes_and_vals(directoriesToAdd);
+        free_nodes_and_vals(directoriesToRemove);
+        free_nodes_and_vals(filesToSearch);
         display_usage();
         break;
     }
@@ -114,14 +116,33 @@ int main(int argc, char **argv) {
     path_rm(path, entry->val);
   }
 
-  for (entry = filesToSearch; entry; entry = entry->next) {
-    char* searchResult = path_search(path, entry->val);
-    if (searchResult) {
-      printf("%s\n", searchResult);
-    } else {
-      print_warning("`%s` not found in path.\n", entry->val);
+  path_clean(path);
+
+  if (filesToSearch) {
+    node_t* directories = path_directories(path);
+    file_list_t* files = files_in_directories(directories);
+    for (entry = filesToSearch; entry; entry = entry->next) {
+      print_verbose("Searching for: `%s`\n", entry->val);
+      char* searchResult = path_search(path, entry->val);
+      if (searchResult) {
+        printf("exact: %s\n", searchResult);
+      } else {
+        print_warning("`%s` not found in path.\n", entry->val);
+        match_t* matches = find_best_matches(entry->val, files);
+        match_t* currMatch;
+        int i;
+        for (i = 0; i < 10 * sizeof(match_t); i += sizeof(match_t)) {
+          currMatch = &matches[i];
+          if (currMatch->metric > 0.4) {
+            printf("almost: %s%c%s\n", currMatch->file->directory, DIR_SEPARATOR_CHAR, currMatch->file->filename);
+          }
+        }
+        free(matches);
+      }
+      free(searchResult);
     }
-    free(searchResult);
+    free_file_list(files);
+    free_nodes(directories, 0);
   }
 
   if (warnings_are_on()) {
@@ -129,15 +150,14 @@ int main(int argc, char **argv) {
   }
 
   if (print) {
-    path_clean(path);
     char* processed_path = path_to_string(path);
     printf("%s\n", processed_path);
     free(processed_path);
   }
 
-  free_nodes(directoriesToAdd);
-  free_nodes(directoriesToRemove);
-  free_nodes(filesToSearch);
+  free_nodes_and_vals(directoriesToAdd);
+  free_nodes_and_vals(directoriesToRemove);
+  free_nodes_and_vals(filesToSearch);
   path_free(path);
   free(path_s);
   return 0;

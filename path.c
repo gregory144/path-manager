@@ -144,6 +144,23 @@ char* path_search(path_t* path, char* file) {
   return NULL;
 }
 
+node_t* path_directories(path_t* path) {
+  path_entry_t* path_entry = NULL;
+  node_t* head = NULL;
+  node_t* tail = NULL;
+  node_t* curr = NULL;
+  for (path_entry = path->head; path_entry; path_entry = path_entry->next) {
+    print_verbose("Found directory: `%s`\n", path_entry->directory);
+    curr = malloc(sizeof(node_t));
+    curr->val = path_entry->directory;
+    curr->next = NULL;
+    if (!head) head = curr;
+    if (tail) tail->next = curr;
+    tail = curr;
+  }
+  return head;
+}
+
 char* path_to_string(path_t* path) {
   char* pathStr = calloc(path->total_string_length + 1, sizeof(char));
   path_entry_t* curr;
