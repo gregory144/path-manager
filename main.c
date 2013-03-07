@@ -14,7 +14,7 @@ void display_usage() {
   exit(EXIT_FAILURE);
 }
 
-int main(int argc, char **argv) { 
+int main(int argc, char **argv) {
   int c;
   int print = 1;
   node_t* directoriesToAdd = NULL;
