@@ -32,9 +32,11 @@ Search your path:
 TODO
 ============
 
-1. Add ability to add a single file to the path (using symbolic link to
+1. Make global changes (changes that will apply after the current shell
+session has ended)
+1. Add functionality to add a single file to the path (using symbolic link to
 ~/.path/exename -> existing file) instead of a whole directory
-1. Add ability to manage multiple files of the same name (i.e. promote 1
+1. Add functionality to manage multiple files of the same name (i.e. promote 1
 file to be first in line)
 1. Provide more options for search (only display exact matches/include
 fuzzy search matches even if exact match is found)
