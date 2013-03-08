@@ -27,7 +27,7 @@ List all files in your path:
 
 Search your path:
 
-path -s gcc
+`path -s gcc`
 
 TODO
 ============
