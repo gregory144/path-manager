@@ -5,19 +5,19 @@
 
 #include "util.h"
 
-int path_verbose_on = 0;
+bool path_verbose_on = false;
 
-int path_warnings_on = 0;
+bool path_warnings_on = false;
 
 void turn_verbose_on() {
-  path_verbose_on = 1;
+  path_verbose_on = true;
 }
 
 void turn_warnings_on() {
-  path_warnings_on = 1;
+  path_warnings_on = true;
 }
 
-int warnings_are_on() {
+bool warnings_are_on() {
   return path_warnings_on;
 }
 

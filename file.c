@@ -7,17 +7,17 @@
 #include "file.h"
 #include "util.h"
 
-int file_exists(char* dir_s) {
+bool file_exists(char* dir_s) {
   struct stat s;
   return stat(dir_s, &s) != -1;
 }
 
-int directory_exists(char* dir_s) {
+bool directory_exists(char* dir_s) {
   struct stat s;
   return stat(dir_s, &s) != -1 && S_ISDIR(s.st_mode);
 }
 
-int directory_readable(char* dir_s) {
+bool directory_readable(char* dir_s) {
   DIR *dir = opendir(dir_s);
   if (dir) {
     closedir(dir);
@@ -26,11 +26,11 @@ int directory_readable(char* dir_s) {
   return 0;
 }
 
-int directory_is_absolute(char* dir_s) {
+bool directory_is_absolute(char* dir_s) {
   return dir_s[0] == DIR_SEPARATOR_CHAR;
 }
 
-int file_is_executable(char* file_s) {
+bool file_is_executable(char* file_s) {
   struct stat s;
   return stat(file_s, &s) == 0 && S_ISREG(s.st_mode) && (s.st_mode & 0111);
 }
@@ -48,17 +48,17 @@ char* file_join(char* dir, char* file) {
   return joined;
 }
 
-int directory_contains_executable_files(char* dir_s) {
+bool directory_contains_executable_files(char* dir_s) {
   DIR *dir = opendir(dir_s);
   struct dirent *entry;
-  int found = 0;
+  bool found = 0;
   if (dir) {
     while ((entry = readdir(dir)) != NULL) {
       char* filename = file_join(dir_s, entry->d_name);
-      int ret = file_is_executable(filename);
+      bool ret = file_is_executable(filename);
       free(filename);
       if (ret) {
-        found++;
+        found = true;
         break;
       }
     }

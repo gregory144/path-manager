@@ -16,7 +16,7 @@ void display_usage() {
 
 int main(int argc, char **argv) {
   int c;
-  int print = 1;
+  bool print = true;
   node_t* directoriesToAdd = NULL;
   node_t* directoriesToRemove = NULL;
   node_t* filesToSearch = NULL;
@@ -58,7 +58,7 @@ int main(int argc, char **argv) {
 
       case 's':
         // turn off print
-        print = 0;
+        print = false;
 
         tmp = malloc(sizeof(node_t));
         tmp->val = strdup(optarg);
@@ -76,7 +76,7 @@ int main(int argc, char **argv) {
         break;
 
       case 'q':
-        print = 0;
+        print = false;
         break;
 
       default:

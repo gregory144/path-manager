@@ -65,10 +65,10 @@ void path_clean(path_t* path) {
 }
 
 /**
- * Returns 1 if there are warnings for the given directory,
- * 0 otherwise.
+ * Returns true if there are warnings for the given directory,
+ * false otherwise.
  */
-int path_warnings_for_directory(char* dir) {
+bool path_warnings_for_directory(char* dir) {
   if (!file_exists(dir)) {
     if (!directory_is_absolute(dir)) {
       print_warning("Directory `%s` is not an absolute directory and does not exist\n", dir);
@@ -82,9 +82,9 @@ int path_warnings_for_directory(char* dir) {
   } else if (!directory_contains_executable_files(dir)) {
     print_warning("Directory `%s` contains no executable files\n", dir);
   } else {
-    return 0;
+    return false;
   }
-  return 1;
+  return true;
 }
 
 void path_warnings(path_t* path) {
@@ -94,9 +94,9 @@ void path_warnings(path_t* path) {
   }
 }
 
-int path_add(path_t* path, char* directory) {
+bool path_add(path_t* path, char* directory) {
   print_verbose("Adding `%s` to path.\n", directory);
-  int warnings = path_warnings_for_directory(directory);
+  bool warnings = path_warnings_for_directory(directory);
   path_entry_t* path_entry = path_construct_entry(directory);
   path->num_entries++;
   path->total_string_length += strlen(directory);
@@ -108,11 +108,11 @@ int path_add(path_t* path, char* directory) {
   return warnings;
 }
 
-int path_rm(path_t* path, char* directory) {
+bool path_rm(path_t* path, char* directory) {
   print_verbose("Removing `%s` from path.\n", directory);
   path_entry_t* curr;
   path_entry_t* prev;
-  int removed = 0;
+  bool removed = 0;
   for (curr = path->head; curr; curr = curr->next) {
     if (directorycmp(directory, curr->directory) == 0) {
       path->total_string_length -= strlen(curr->directory);
@@ -125,7 +125,7 @@ int path_rm(path_t* path, char* directory) {
       }
       free(curr);
       curr = prev;
-      removed++;
+      removed = true;
     }
     prev = curr;
   }

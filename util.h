@@ -1,6 +1,8 @@
 #ifndef UTIL_H
 #define UTIL_H
 
+typedef enum { false, true } bool;
+
 typedef struct node_t {
   struct node_t* next;
   char* val;
@@ -10,7 +12,7 @@ void turn_verbose_on();
 
 void turn_warnings_on();
 
-int warnings_are_on();
+bool warnings_are_on();
 
 void print_verbose(char* s, ...);
 

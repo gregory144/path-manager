@@ -22,9 +22,9 @@ void path_clean(path_t* path);
 
 void path_warnings(path_t* path);
 
-int path_add(path_t* path, char* directory);
+bool path_add(path_t* path, char* directory);
 
-int path_rm(path_t* path, char* directory);
+bool path_rm(path_t* path, char* directory);
 
 char* path_search(path_t* path, char* file);
 
