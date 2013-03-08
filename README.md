@@ -12,6 +12,8 @@ TODO
 file to be first in line)
 1. Provide more options for search (only display exact matches)
 1. Improve algorithm for fuzzy search
+1. Add functionality to detect current shell (using getppid and
+/proc/$pid/cmdline
 1. Add warnings for duplicate executable file names (i.e. a file is on
 the path, but it can't be used because it's being 'hidden' by another
 file of the same name)
