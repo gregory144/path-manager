@@ -7,7 +7,7 @@ Usage (bash):
 
 Add a directory to your path:
 
-``path -a /path/to/directory -e``
+`` `path -a /path/to/directory -e` ``
 
 or
 
@@ -15,7 +15,7 @@ or
 
 Remove a directory from your path:
 
-``path -r /path/to/directory -e``
+`` `path -r /path/to/directory -e` ``
 
 or
 
