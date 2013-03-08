@@ -9,14 +9,34 @@
 #include "file.h"
 #include "match.h"
 
+// cached copy of all files in the path
+node_t* directory_names = NULL;
+file_list_t* all_files = NULL;
+
 void display_usage() {
   printf("Usage: path\n");
   exit(EXIT_FAILURE);
 }
 
+file_list_t* get_all_files(path_t* path) {
+  if (!all_files) {
+    directory_names = path_directories(path);
+    all_files = files_in_directories(directory_names);
+  }
+  return all_files;
+}
+
+void free_all_files() {
+  if (all_files) {
+    free_file_list(all_files);
+    free_nodes(directory_names, 0);
+  }
+}
+
 int main(int argc, char **argv) {
   int c;
   bool print = true;
+  bool list = false;
   node_t* directoriesToAdd = NULL;
   node_t* directoriesToRemove = NULL;
   node_t* filesToSearch = NULL;
@@ -28,13 +48,14 @@ int main(int argc, char **argv) {
       {"add",     required_argument, 0, 'a'},
       {"rm",      required_argument, 0, 'r'},
       {"search",  required_argument, 0, 's'},
+      {"list",    no_argument,       0, 'l'},
       {"verbose", no_argument,       0, 'v'},
       {"warn",    no_argument,       0, 'w'},
       {"quiet",   no_argument,       0, 'q'},
       {"help",    no_argument,       0, 'h'}
     };
 
-    c = getopt_long(argc, argv, "-a:r:s:vwqh?", long_options, &option_index);
+    c = getopt_long(argc, argv, "-a:r:s:lvwqh?", long_options, &option_index);
     if (c == -1)
       break;
 
@@ -64,6 +85,11 @@ int main(int argc, char **argv) {
         tmp->val = strdup(optarg);
         tmp->next = filesToSearch;
         filesToSearch = tmp;
+        break;
+
+      case 'l':
+        list = true;
+        print = false;
         break;
 
       case 'v':
@@ -119,8 +145,7 @@ int main(int argc, char **argv) {
   path_clean(path);
 
   if (filesToSearch) {
-    node_t* directories = path_directories(path);
-    file_list_t* files = files_in_directories(directories);
+    file_list_t* files = get_all_files(path);
     for (entry = filesToSearch; entry; entry = entry->next) {
       print_verbose("Searching for: `%s`\n", entry->val);
       char* searchResult = path_search(path, entry->val);
@@ -145,20 +170,30 @@ int main(int argc, char **argv) {
       }
       free(searchResult);
     }
-    free_file_list(files);
-    free_nodes(directories, 0);
   }
 
   if (warnings_are_on()) {
     path_warnings(path);
   }
 
-  if (print) {
-    char* processed_path = path_to_string(path);
-    printf("%s\n", processed_path);
-    free(processed_path);
+  if (list) {
+    file_list_t* files = get_all_files(path);
+    file_list_t* entry = NULL;
+
+    for (entry = files; entry; entry = entry->next) {
+      if (entry->executable) {
+        printf("%s\n", entry->full_path);
+      }
+    }
+  } else {
+    if (print) {
+      char* processed_path = path_to_string(path);
+      printf("%s\n", processed_path);
+      free(processed_path);
+    }
   }
 
+  free_all_files();
   free_nodes_and_vals(directoriesToAdd);
   free_nodes_and_vals(directoriesToRemove);
   free_nodes_and_vals(filesToSearch);
