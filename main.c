@@ -15,7 +15,6 @@ typedef enum { print_default, print_export, print_list, print_search, print_quie
 
 typedef enum { export_default, export_setenv } export_mode_t;
 
-
 // cached copy of all files in the path
 node_t* directory_names = NULL;
 file_list_t* all_files = NULL;
