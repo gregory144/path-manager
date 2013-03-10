@@ -44,6 +44,7 @@ int main(int argc, char **argv) {
   export_mode_t export_mode = export_default;
   bool save = true;
   bool install = false;
+  bool install_global = false;
 
   node_t* dirs_to_add = NULL;
   node_t* dirs_to_remove = NULL;
@@ -58,6 +59,7 @@ int main(int argc, char **argv) {
       {"search",  required_argument, 0, 's'},
       {"export",  optional_argument, 0, 'e'},
       {"install", no_argument,       0, 'i'},
+      {"install-global", no_argument,0, 'I'},
       {"no-save", no_argument,       0, 'n'},
       {"list",    no_argument,       0, 'l'},
       {"verbose", no_argument,       0, 'v'},
@@ -66,7 +68,7 @@ int main(int argc, char **argv) {
       {"help",    no_argument,       0, 'h'}
     };
 
-    c = getopt_long(argc, argv, "-a:r:s:einlvwqh?", long_options, &option_index);
+    c = getopt_long(argc, argv, "-a:r:s:eiInlvwqh?", long_options, &option_index);
     if (c == -1)
       break;
 
@@ -108,6 +110,10 @@ int main(int argc, char **argv) {
         }
         break;
 
+      case 'I':
+        install_global = true;
+        break;
+
       case 'i':
         install = true;
         break;
@@ -144,8 +150,8 @@ int main(int argc, char **argv) {
     }
   }
 
-  if (install) {
-    install_in_shell(false);
+  if (install || install_global) {
+    install_in_shell(install_global);
   }
 
   char* orig_path = getenv(ENV_VAR_NAME);

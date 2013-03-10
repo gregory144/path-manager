@@ -6,6 +6,7 @@
 #include <pwd.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <time.h>
 
 #include "util.h"
 #include "file.h"
@@ -64,97 +65,110 @@ char* get_home_directory() {
 }
 
 char* get_executable_file() {
-  int buf_size = 4096 * sizeof(char);
-  char* buf = malloc(buf_size);
+  int buf_size = 4096;
+  char* buf = calloc(buf_size, sizeof(char));
   // TODO dynamically allocate buffer for correctness
-  int readlink_ret = readlink("/proc/self/exe", buf, buf_size - 1);
+  int readlink_ret = readlink("/proc/self/exe", buf, (buf_size - 1) * sizeof(char));
   if (readlink_ret < sizeof(buf)) {
     print_warning("Could not find my own directory");
   }
   return buf;
 }
 
-bool install_in_shell(bool global) {
-
-  //user mode - install in profile, rc file
-  //global mode - install in /etc/profile and /etc/bash.bashrc
-  char *profile_filename = NULL;
-  char *rc_filename = NULL;
-
-  if (global) {
-    if (directory_exists("/etc/conf.d")) {
-      profile_filename = "/etc/conf.d/path.sh";
-    } else if (file_exists("/etc/profile")) {
-      profile_filename = "/etc/profile";
-    }
-    if (file_exists("/etc/bash.bashrc")) {
-      rc_filename = "/etc/bash.bashrc";
-    }
-  } else {
-    char* home_dir = get_home_directory();
-    int i;
-    char* profile_search_list[] = {".bash_profile", ".bash_login", ".profile"};
-    for (i = 0; i < 3; i++) {
-      char* filename = file_join(home_dir, profile_search_list[i]);
-      if (file_exists(filename)) {
-        profile_filename = filename;
-        break;
-      }
-      free(filename);
-    }
-    if (!profile_filename) {
-      profile_filename = file_join(home_dir, profile_search_list[0]);
-    }
-
-    char* filename = file_join(home_dir, ".bashrc");
-    printf("Does %s exist?\n", filename);
-    if (file_exists(filename)) {
-      printf("Yes\n");
-      rc_filename = filename;
-    } else {
-      free(filename);
-    }
-
-    free(home_dir);
+int write_script(char* filename, char* script) {
+  // TODO better error handling
+  print_verbose("Installing in %s.\n", filename);
+  FILE* file = fopen(filename, "a");
+  int wrote = -1;
+  if (file) {
+    wrote = fprintf(file, "%s", script);
+    fclose(file);
   }
+  if (wrote == strlen(script)) {
+    return true;
+  } else {
+    fprintf(stderr, "Failed to write to %s\n", filename);
+    return false;
+  }
+}
+
+char* bash_script() {
 
   char* executable_filename = get_executable_file();
-  char* script = "\n[[ -s \"%s\" ]] && `%s --export`\n";
-  int script_length = strlen(script) + (strlen(executable_filename) * 2);
-  char* script_buf = malloc((script_length + 1) * sizeof(char));
-  sprintf(script_buf, script, executable_filename, executable_filename);
+  if (executable_filename) {
+    char* version = PATH_VERSION;
 
-  printf("Writing \"%s\"\n", script_buf);
+    time_t ltime;
+    time(&ltime);
+    struct tm* timestamp = localtime(&ltime);
+    char* timestamp_str = asctime(timestamp);
 
-  if (profile_filename) {
-    // TODO better error handling
-    print_verbose("Installing in %s.\n", profile_filename);
-    FILE* profile_file = fopen(profile_filename, "a");
-    if (profile_file) {
-      int wrote = fprintf(profile_file, "%s", script_buf);
-      printf("Wrote %d\n", wrote);
-      fclose(profile_file);
-    } else {
-      print_verbose("Failed to write to %s\n", profile_filename);
-    }
+    //timestamp_str will include a newline char
+    char* script = "\n# Added by PATH-%s at %s[[ -s \"%s\" ]] && `%s --export`\n";
+    int script_length = strlen(script) + strlen(version) + strlen(timestamp_str) + (strlen(executable_filename) * 2);
+    char* script_buf = malloc((script_length + 1) * sizeof(char));
+    sprintf(script_buf, script, version, timestamp_str, executable_filename, executable_filename);
+
+    free(executable_filename);
+
+    return script_buf;
   }
+  return NULL;
+}
 
-  if (rc_filename) {
-    print_verbose("Installing in %s.\n", rc_filename);
-    FILE* rc_file = fopen(rc_filename, "a");
-    if (rc_file) {
-      int wrote = fprintf(rc_file, "%s", script_buf);
-      printf("Wrote %d, %d\n", wrote, errno);
-      fclose(rc_file);
+bool install_in_shell(bool global) {
+  // keep track of the number of files
+  // that we've written to (should end up being 2)
+  int wrote_files = 0;
+
+  char* script = bash_script();
+  if (script) {
+    print_verbose("Writing \"%s\"\n", script);
+
+    char *profile_filename = NULL;
+
+    if (global) {
+      //global mode - install in /etc/profile and /etc/bash.bashrc
+      if (directory_exists("/etc/profile.d")) {
+        profile_filename = "/etc/profile.d/path.sh";
+      } else if (file_exists("/etc/profile")) {
+        profile_filename = "/etc/profile";
+      }
+      if (profile_filename) {
+        if (write_script(profile_filename, script)) wrote_files++;
+      }
+      if (file_exists("/etc/bash.bashrc")) {
+        if (write_script("/etc/bash.bashrc", script)) wrote_files++;
+      }
     } else {
-      print_verbose("Failed to write to %s\n", rc_filename);
-    }
-  }
+      //user mode - install in profile, rc file
+      char* home_dir = get_home_directory();
+      int i;
+      char* profile_search_list[] = {".bash_profile", ".bash_login", ".profile"};
+      for (i = 0; i < 3; i++) {
+        char* filename = file_join(home_dir, profile_search_list[i]);
+        if (file_exists(filename)) {
+          profile_filename = filename;
+          break;
+        }
+        free(filename);
+      }
+      if (!profile_filename) {
+        profile_filename = file_join(home_dir, profile_search_list[0]);
+      }
+      if (write_script(profile_filename, script)) wrote_files++;
+      free(profile_filename);
 
-  free(script_buf);
-  free(executable_filename);
-  free(profile_filename);
-  return true;
+      char* rc_filename = file_join(home_dir, ".bashrc");
+      if (write_script(rc_filename, script)) wrote_files++;
+      free(rc_filename);
+
+      free(home_dir);
+    }
+
+    free(script);
+  }
+  return wrote_files == 2;
 }
 
 void free_nodes(node_t* node) {
