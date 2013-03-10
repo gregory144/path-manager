@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 
 #include "path.h"
@@ -87,11 +88,30 @@ bool path_warnings_for_directory(char* dir) {
   return true;
 }
 
-void path_warnings(path_t* path) {
+bool path_warnings(path_t* path) {
+  bool warnings = false;
   path_entry_t* curr;
   for (curr = path->head; curr; curr = curr->next) {
-    path_warnings_for_directory(curr->directory);
+    warnings |= path_warnings_for_directory(curr->directory);
   }
+  return warnings;
+}
+
+bool path_save(path_t* path) {
+  char* home_dir = get_home_directory();
+  char* path_file_name = file_join(home_dir, "/.path");
+  char* processed_path = path_to_string(path);
+
+  // TODO better error handling
+  FILE* path_file = fopen(path_file_name, "w");
+  fprintf(path_file, "%s\n", processed_path);
+
+  fclose(path_file);
+
+  free(processed_path);
+  free(path_file_name);
+  free(home_dir);
+  return true;
 }
 
 bool path_add(path_t* path, char* directory) {

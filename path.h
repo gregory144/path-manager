@@ -20,7 +20,9 @@ path_t* path_parse(char* pathStr);
 
 void path_clean(path_t* path);
 
-void path_warnings(path_t* path);
+bool path_warnings(path_t* path);
+
+bool path_save(path_t* path);
 
 bool path_add(path_t* path, char* directory);
 

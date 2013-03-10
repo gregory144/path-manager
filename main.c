@@ -11,7 +11,7 @@
 
 #define ENV_VAR_NAME "PATH"
 
-typedef enum { print_default, print_export, print_list, print_search, print_quiet } print_mode_t;
+typedef enum { print_path, print_export, print_list, print_search, print_quiet } print_mode_t;
 
 typedef enum { export_default, export_setenv } export_mode_t;
 
@@ -41,8 +41,11 @@ void free_all_files() {
 
 int main(int argc, char **argv) {
   int c;
-  print_mode_t print_mode = print_default;
+  print_mode_t print_mode = print_path;
   export_mode_t export_mode = export_default;
+  bool save = true;
+  bool install = false;
+
   node_t* directoriesToAdd = NULL;
   node_t* directoriesToRemove = NULL;
   node_t* filesToSearch = NULL;
@@ -55,6 +58,8 @@ int main(int argc, char **argv) {
       {"rm",      required_argument, 0, 'r'},
       {"search",  required_argument, 0, 's'},
       {"export",  optional_argument, 0, 'e'},
+      {"install", no_argument,       0, 'i'},
+      {"no-save", no_argument,       0, 'n'},
       {"list",    no_argument,       0, 'l'},
       {"verbose", no_argument,       0, 'v'},
       {"warn",    no_argument,       0, 'w'},
@@ -62,7 +67,7 @@ int main(int argc, char **argv) {
       {"help",    no_argument,       0, 'h'}
     };
 
-    c = getopt_long(argc, argv, "-a:r:s:elvwqh?", long_options, &option_index);
+    c = getopt_long(argc, argv, "-a:r:s:einlvwqh?", long_options, &option_index);
     if (c == -1)
       break;
 
@@ -104,6 +109,14 @@ int main(int argc, char **argv) {
         }
         break;
 
+      case 'i':
+        install = true;
+        break;
+
+      case 'n':
+        save = false;
+        break;
+
       case 'l':
         print_mode = print_list;
         break;
@@ -132,13 +145,16 @@ int main(int argc, char **argv) {
     }
   }
 
+  if (install) {
+    install_in_shell(false);
+  }
+
   char* orig_path = getenv(ENV_VAR_NAME);
   int path_len = 0;
   char* path_s = "";
   if (orig_path != NULL) {
     path_len = strlen(orig_path);
     path_s = strndup(orig_path, path_len);
-    print_verbose("%s=%s\n", ENV_VAR_NAME, path_s);
   } else {
     print_verbose("Unable to read %s environment variable.\n", ENV_VAR_NAME);
   }
@@ -160,8 +176,9 @@ int main(int argc, char **argv) {
 
   path_clean(path);
 
+  bool warnings = false;
   if (warnings_are_on()) {
-    path_warnings(path);
+    warnings = path_warnings(path);
   }
 
   switch (print_mode) {
@@ -219,13 +236,21 @@ int main(int argc, char **argv) {
       break;
     case print_quiet:
       break;
-    case print_default:
+    case print_path:
     default: {
         char* processed_path = path_to_string(path);
         printf("%s\n", processed_path);
         free(processed_path);
       }
       break;
+  }
+
+  if (save) {
+    if (warnings) {
+      print_warning("Did not save %s because of warnings.\n", ENV_VAR_NAME);
+    } else {
+      path_save(path);
+    }
   }
 
   free_all_files();
