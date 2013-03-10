@@ -46,4 +46,5 @@ fuzzy search matches even if exact match is found)
 1. Add warnings for duplicate executable file names (i.e. a file is on
 the path, but it can't be used because it's being 'hidden' by another
 file of the same name)
-1. Add append functionality (add to end of path)
+1. Add append functionality (add to the end of PATH)
+1. Add support for other env variables (MANPATH, COWPATH)
