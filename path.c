@@ -155,11 +155,11 @@ bool path_rm(path_t* path, char* directory) {
 char* path_search(path_t* path, char* file) {
   path_entry_t* curr;
   for (curr = path->head; curr; curr = curr->next) {
-    char* fullFile = file_join(curr->directory, file);
-    if (file_is_executable(fullFile)) {
-      return fullFile;
+    char* full_file = file_join(curr->directory, file);
+    if (file_is_executable(full_file)) {
+      return full_file;
     }
-    free(fullFile);
+    free(full_file);
   }
   return NULL;
 }
@@ -172,7 +172,7 @@ node_t* path_directories(path_t* path) {
   for (path_entry = path->head; path_entry; path_entry = path_entry->next) {
     print_verbose("Found directory: `%s`\n", path_entry->directory);
     curr = malloc(sizeof(node_t));
-    curr->val = path_entry->directory;
+    curr->val = strdup(path_entry->directory);
     curr->next = NULL;
     if (!head) head = curr;
     if (tail) tail->next = curr;
@@ -182,24 +182,24 @@ node_t* path_directories(path_t* path) {
 }
 
 char* path_to_string(path_t* path) {
-  char* pathStr = calloc(path->total_string_length + 1, sizeof(char));
+  char* path_str = calloc(path->total_string_length + 1, sizeof(char));
   path_entry_t* curr;
   for (curr = path->head; curr; curr = curr->next) {
-    strncat(pathStr, curr->directory, strlen(curr->directory));
+    strncat(path_str, curr->directory, strlen(curr->directory));
     if (curr->next) {
-      strncat(pathStr, (char[]){ PATH_SEPARATOR_CHAR }, 1);
+      strncat(path_str, (char[]){ PATH_SEPARATOR_CHAR }, 1);
     }
   }
-  return pathStr;
+  return path_str;
 }
 
 void path_free(path_t* path) {
   path_entry_t* curr;
-  path_entry_t* tmpEntry;
+  path_entry_t* tmp_entry;
   for (curr = path->head; curr;) {
-    tmpEntry = curr;
+    tmp_entry = curr;
     curr = curr->next;
-    free(tmpEntry);
+    free(tmp_entry);
   }
   free(path);
 }

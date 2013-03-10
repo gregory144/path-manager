@@ -16,7 +16,6 @@ typedef enum { print_path, print_export, print_list, print_search, print_quiet }
 typedef enum { export_default, export_setenv } export_mode_t;
 
 // cached copy of all files in the path
-node_t* directory_names = NULL;
 file_list_t* all_files = NULL;
 
 void display_usage() {
@@ -26,8 +25,9 @@ void display_usage() {
 
 file_list_t* get_all_files(path_t* path) {
   if (!all_files) {
-    directory_names = path_directories(path);
+    node_t* directory_names = path_directories(path);
     all_files = files_in_directories(directory_names);
+    free_nodes(directory_names);
   }
   return all_files;
 }
@@ -35,7 +35,6 @@ file_list_t* get_all_files(path_t* path) {
 void free_all_files() {
   if (all_files) {
     free_file_list(all_files);
-    free_nodes(directory_names, 0);
   }
 }
 
@@ -46,9 +45,9 @@ int main(int argc, char **argv) {
   bool save = true;
   bool install = false;
 
-  node_t* directoriesToAdd = NULL;
-  node_t* directoriesToRemove = NULL;
-  node_t* filesToSearch = NULL;
+  node_t* dirs_to_add = NULL;
+  node_t* dirs_to_remove = NULL;
+  node_t* files_to_search = NULL;
   node_t* tmp;
 
   while (1) {
@@ -77,16 +76,16 @@ int main(int argc, char **argv) {
         tmp = malloc(sizeof(node_t));
         tmp->val = strdup(optarg);
         print_verbose("Adding: %s\n", tmp->val);
-        tmp->next = directoriesToAdd;
-        directoriesToAdd = tmp;
+        tmp->next = dirs_to_add;
+        dirs_to_add = tmp;
         break;
 
       case 'r':
         tmp = malloc(sizeof(node_t));
         tmp->val = strdup(optarg);
         print_verbose("Removing: %s\n", tmp->val);
-        tmp->next = directoriesToRemove;
-        directoriesToRemove = tmp;
+        tmp->next = dirs_to_remove;
+        dirs_to_remove = tmp;
         break;
 
       case 's':
@@ -94,8 +93,8 @@ int main(int argc, char **argv) {
 
         tmp = malloc(sizeof(node_t));
         tmp->val = strdup(optarg);
-        tmp->next = filesToSearch;
-        filesToSearch = tmp;
+        tmp->next = files_to_search;
+        files_to_search = tmp;
         break;
 
       case 'e':
@@ -137,9 +136,9 @@ int main(int argc, char **argv) {
       default:
       case 'h':
       case '?':
-        free_nodes_and_vals(directoriesToAdd);
-        free_nodes_and_vals(directoriesToRemove);
-        free_nodes_and_vals(filesToSearch);
+        free_nodes(dirs_to_add);
+        free_nodes(dirs_to_remove);
+        free_nodes(files_to_search);
         display_usage();
         break;
     }
@@ -150,11 +149,9 @@ int main(int argc, char **argv) {
   }
 
   char* orig_path = getenv(ENV_VAR_NAME);
-  int path_len = 0;
   char* path_s = "";
   if (orig_path != NULL) {
-    path_len = strlen(orig_path);
-    path_s = strndup(orig_path, path_len);
+    path_s = strdup(orig_path);
   } else {
     print_verbose("Unable to read %s environment variable.\n", ENV_VAR_NAME);
   }
@@ -163,14 +160,14 @@ int main(int argc, char **argv) {
 
   node_t* entry;
 
-  for (entry = directoriesToAdd; entry; entry = entry->next) {
+  for (entry = dirs_to_add; entry; entry = entry->next) {
     int added = path_add(path, entry->val);
     if (!added) {
       print_warning("Directory `%s` not added to the path due to warnings. Use --force to override.\n", entry->val);
     }
   }
 
-  for (entry = directoriesToRemove; entry; entry = entry->next) {
+  for (entry = dirs_to_remove; entry; entry = entry->next) {
     path_rm(path, entry->val);
   }
 
@@ -183,23 +180,23 @@ int main(int argc, char **argv) {
 
   switch (print_mode) {
     case print_search:
-      if (filesToSearch) {
+      if (files_to_search) {
         file_list_t* files = get_all_files(path);
-        for (entry = filesToSearch; entry; entry = entry->next) {
+        for (entry = files_to_search; entry; entry = entry->next) {
           print_verbose("Searching for: `%s`\n", entry->val);
-          char* searchResult = path_search(path, entry->val);
-          if (searchResult) {
-            printf("exact: %s\n", searchResult);
+          char* search_result = path_search(path, entry->val);
+          if (search_result) {
+            printf("exact: %s\n", search_result);
           } else {
             print_warning("`%s` not found in path.\n", entry->val);
             match_t* matches = find_best_matches(entry->val, files);
-            match_t* currMatch;
+            match_t* curr_match;
             int i;
             for (i = 0; i < 10; i++) {
-              currMatch = &matches[i];
-              if (currMatch && currMatch->metric > 0.4) {
-                printf("almost: %s", currMatch->file->full_path);
-                if (!currMatch->file->executable) {
+              curr_match = &matches[i];
+              if (curr_match && curr_match->metric > 0.4) {
+                printf("almost: %s", curr_match->file->full_path);
+                if (!curr_match->file->executable) {
                   printf(" (not executable)");
                 }
                 printf("\n");
@@ -207,7 +204,7 @@ int main(int argc, char **argv) {
             }
             free(matches);
           }
-          free(searchResult);
+          free(search_result);
         }
       }
       break;
@@ -254,9 +251,9 @@ int main(int argc, char **argv) {
   }
 
   free_all_files();
-  free_nodes_and_vals(directoriesToAdd);
-  free_nodes_and_vals(directoriesToRemove);
-  free_nodes_and_vals(filesToSearch);
+  free_nodes(dirs_to_add);
+  free_nodes(dirs_to_remove);
+  free_nodes(files_to_search);
   path_free(path);
   free(path_s);
   return 0;

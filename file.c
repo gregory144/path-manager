@@ -98,13 +98,15 @@ file_list_t* files_in_directories(node_t* directories) {
         if (!directory_exists(full_path)) { // make sure it is not a directory
           new_file = malloc(sizeof(file_list_t));
           new_file->next = NULL;
-          new_file->directory = curr->val;
+          new_file->directory = strdup(curr->val);
           new_file->filename = strdup(dir_entry->d_name);
           new_file->full_path = full_path;
           new_file->executable = file_is_executable(full_path);
           if (!files) files = new_file;
           if (tail) tail->next = new_file;
           tail = new_file;
+        } else {
+          free(full_path);
         }
       }
       closedir(dir);
@@ -121,6 +123,7 @@ void free_file_list(file_list_t* files) {
     tmp = entry;
     entry = entry->next;
     free(tmp->filename);
+    free(tmp->directory);
     free(tmp->full_path);
     free(tmp);
   }

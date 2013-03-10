@@ -16,7 +16,7 @@ typedef struct path_entry_t {
   struct path_entry_t* next;
 } path_entry_t;
 
-path_t* path_parse(char* pathStr);
+path_t* path_parse(char* path_str);
 
 void path_clean(path_t* path);
 

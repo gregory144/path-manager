@@ -24,8 +24,6 @@ char* get_executable_directory();
 
 bool install_in_shell();
 
-void free_nodes_and_vals(node_t* node);
-
-void free_nodes(node_t* node, int freeVals);
+void free_nodes(node_t* node);
 
 #endif

@@ -32,10 +32,10 @@ double best_match_metric(char* a, char* b) {
 }
 
 int compare_matches(const void *a, const void *b) {
-  match_t* aMatch = (match_t*)a;
-  match_t* bMatch = (match_t*)b;
-  if (aMatch->metric == bMatch->metric) return bMatch->file->executable - aMatch->file->executable;
-  return (bMatch->metric - aMatch->metric) * 100;
+  match_t* a_match = (match_t*)a;
+  match_t* b_match = (match_t*)b;
+  if (a_match->metric == b_match->metric) return b_match->file->executable - a_match->file->executable;
+  return (b_match->metric - a_match->metric) * 100;
 }
 
 match_t* find_best_matches(char* needle, file_list_t* haystack) {

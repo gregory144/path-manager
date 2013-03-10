@@ -50,17 +50,17 @@ void print_warning(char* s, ...) {
 // result must be free'd
 char* get_home_directory() {
   char* home = getenv(HOME_ENV_VAR);
-  bool dontDup = false;
+  bool dont_dup = false;
   if (!home) {
     struct passwd* passwd_data = getpwuid(geteuid());
     if (passwd_data) {
       home = passwd_data->pw_dir;
     } else {
       home = getcwd(NULL, 0);
-      dontDup = true;
+      dont_dup = true;
     }
   }
-  return dontDup ? home : strdup(home);
+  return dont_dup ? home : strdup(home);
 }
 
 char* get_executable_file() {
@@ -157,18 +157,14 @@ bool install_in_shell(bool global) {
   return true;
 }
 
-void free_nodes_and_vals(node_t* node) {
-  free_nodes(node, 1);
-}
-
-void free_nodes(node_t* node, int freeVals) {
+void free_nodes(node_t* node) {
   node_t* entry;
   node_t* tmp;
 
   for (entry = node; entry;) {
     tmp = entry;
     entry = entry->next;
-    if (freeVals) free(tmp->val);
+    free(tmp->val);
     free(tmp);
   }
 }
