@@ -29,7 +29,17 @@ bool file_is_executable(char* file);
 
 int directorycmp(char* dir1, char* dir2);
 
+file_list_t* list_directory(char* directory, bool only_files);
+
 file_list_t* files_in_directories(node_t* directories);
+
+file_list_t* sort_files(file_list_t* files);
+
+char* symlink_target(char* link);
+
+bool mkdir_for_user(char* path);
+
+bool clear_dir(char* path);
 
 void free_file_list(file_list_t* files);
 

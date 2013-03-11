@@ -2,8 +2,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 #include <pwd.h>
+#include <unistd.h>
 #include <fcntl.h>
 #include <errno.h>
 #include <time.h>
@@ -65,14 +65,7 @@ char* get_home_directory() {
 }
 
 char* get_executable_file() {
-  int buf_size = 4096;
-  char* buf = calloc(buf_size, sizeof(char));
-  // TODO dynamically allocate buffer for correctness
-  int readlink_ret = readlink("/proc/self/exe", buf, (buf_size - 1) * sizeof(char));
-  if (readlink_ret < sizeof(buf)) {
-    print_warning("Could not find my own directory");
-  }
-  return buf;
+  return symlink_target("/proc/self/exe");
 }
 
 int write_script(char* filename, char* script) {

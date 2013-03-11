@@ -154,15 +154,7 @@ int main(int argc, char **argv) {
     install_in_shell(install_global);
   }
 
-  char* orig_path = getenv(ENV_VAR_NAME);
-  char* path_s = "";
-  if (orig_path != NULL) {
-    path_s = strdup(orig_path);
-  } else {
-    print_verbose("Unable to read %s environment variable.\n", ENV_VAR_NAME);
-  }
-
-  path_t* path = path_parse(path_s);
+  path_t* path = path_load(ENV_VAR_NAME);
 
   node_t* entry;
 
@@ -174,14 +166,14 @@ int main(int argc, char **argv) {
   }
 
   for (entry = dirs_to_remove; entry; entry = entry->next) {
+    print_verbose("Removing `%s` from path.\n", entry->val);
     path_rm(path, entry->val);
   }
 
   path_clean(path);
 
-  bool warnings = false;
   if (warnings_are_on()) {
-    warnings = path_warnings(path);
+    path_warnings(path);
   }
 
   switch (print_mode) {
@@ -249,11 +241,7 @@ int main(int argc, char **argv) {
   }
 
   if (save) {
-    if (warnings) {
-      print_warning("Did not save %s because of warnings.\n", ENV_VAR_NAME);
-    } else {
-      path_save(path);
-    }
+    path_save(path);
   }
 
   free_all_files();
@@ -261,7 +249,6 @@ int main(int argc, char **argv) {
   free_nodes(dirs_to_remove);
   free_nodes(files_to_search);
   path_free(path);
-  free(path_s);
   return 0;
 }
 

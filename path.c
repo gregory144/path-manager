@@ -1,15 +1,25 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <libgen.h> // for basename
+#include <unistd.h> // for symlink
 
 #include "path.h"
 #include "file.h"
 #include "util.h"
 
-path_entry_t* path_construct_entry(char* directory) {
+char* get_path_directory() {
+  char* home_dir = get_home_directory();
+  char* path_directory = file_join(home_dir, ".path");
+  free(home_dir);
+  return path_directory;
+}
+
+path_entry_t* path_construct_entry(char* directory, bool modifiable) {
   path_entry_t* entry = malloc(sizeof(path_entry_t));
-  entry->directory = directory;
+  entry->directory = strdup(directory);
   entry->next = NULL;
+  entry->modifiable = modifiable;
   return entry;
 }
 
@@ -22,7 +32,7 @@ path_t* path_parse(char* path_s) {
   static char delim[] = { PATH_SEPARATOR_CHAR };
   char* result = strtok_r(path_s, delim, &tok_state);
   if (result) {
-    path->head = path_construct_entry(result);
+    path->head = path_construct_entry(result, false);
     num_entries++;
     total_string_length += strlen(result);
   }
@@ -30,7 +40,7 @@ path_t* path_parse(char* path_s) {
   while (result) {
     result = strtok_r(NULL, delim, &tok_state);
     if (result) {
-      path_entry_t* next = path_construct_entry(result);
+      path_entry_t* next = path_construct_entry(result, false);
       num_entries++;
       total_string_length += strlen(result);
       prev->next = next;
@@ -40,6 +50,41 @@ path_t* path_parse(char* path_s) {
   path->num_entries = num_entries;
   total_string_length += num_entries - 1; // for path separators
   path->total_string_length = total_string_length;
+  return path;
+}
+
+path_t* path_load(char* env_var_name) {
+  // load the default path from the environment
+  char* orig_path = getenv(env_var_name);
+  char* path_s = "";
+  if (orig_path != NULL) {
+    path_s = strdup(orig_path);
+  } else {
+    print_verbose("Unable to read %s environment variable.\n", env_var_name);
+  }
+
+  path_t* path = path_parse(path_s);
+  free(path_s);
+
+  // load the path from ~/.path
+  char* path_directory = get_path_directory();
+  if (directory_exists(path_directory)) {
+    // TODO must load them in order!
+    file_list_t* files = list_directory(path_directory, false);
+    printf("Sorting file list %s\n", files->full_path);
+    files = sort_files(files);
+
+    file_list_t* curr;
+    for (curr = files; curr; curr = curr->next) {
+      char* target = symlink_target(curr->full_path);
+      path_add(path, target);
+      free(target);
+    }
+    free_file_list(files);
+  }
+
+  free(path_directory);
+
   return path;
 }
 
@@ -98,26 +143,35 @@ bool path_warnings(path_t* path) {
 }
 
 bool path_save(path_t* path) {
-  char* home_dir = get_home_directory();
-  char* path_file_name = file_join(home_dir, "/.path");
-  char* processed_path = path_to_string(path);
+  char* path_directory = get_path_directory();
+  //clear out directory
+  clear_dir(path_directory);
+  mkdir_for_user(path_directory);
 
-  // TODO better error handling
-  FILE* path_file = fopen(path_file_name, "w");
-  fprintf(path_file, "%s\n", processed_path);
+  path_entry_t* curr;
+  int i;
+  for (curr = path->head, i = 0; curr; curr = curr->next, i++) {
+    // dont link a file that is already in ~/.path
+    if (curr->modifiable && strncmp(curr->directory, path_directory, strlen(path_directory)) != 0) {
+      char i_buf[50];
+      snprintf(i_buf, 50, "%d", i);
+      char* symlink_filename = file_join(path_directory, i_buf);
+      print_verbose("Linking %s to %s\n", symlink_filename, curr->directory);
+      symlink(curr->directory, symlink_filename);
+      free(symlink_filename);
+    }
+  }
 
-  fclose(path_file);
-
-  free(processed_path);
-  free(path_file_name);
-  free(home_dir);
+  free(path_directory);
   return true;
 }
 
 bool path_add(path_t* path, char* directory) {
+  // remove the file if it's already on the path first
+  path_rm(path, directory);
   print_verbose("Adding `%s` to path.\n", directory);
   bool warnings = path_warnings_for_directory(directory);
-  path_entry_t* path_entry = path_construct_entry(directory);
+  path_entry_t* path_entry = path_construct_entry(directory, true);
   path->num_entries++;
   path->total_string_length += strlen(directory);
   if (path->head) {
@@ -129,9 +183,8 @@ bool path_add(path_t* path, char* directory) {
 }
 
 bool path_rm(path_t* path, char* directory) {
-  print_verbose("Removing `%s` from path.\n", directory);
   path_entry_t* curr;
-  path_entry_t* prev;
+  path_entry_t* prev = NULL;
   bool removed = 0;
   for (curr = path->head; curr; curr = curr->next) {
     if (directorycmp(directory, curr->directory) == 0) {
@@ -143,8 +196,9 @@ bool path_rm(path_t* path, char* directory) {
       } else {
         prev->next = curr->next;
       }
+      free(curr->directory);
       free(curr);
-      curr = prev;
+      if (prev) curr = prev;
       removed = true;
     }
     prev = curr;
@@ -199,6 +253,7 @@ void path_free(path_t* path) {
   for (curr = path->head; curr;) {
     tmp_entry = curr;
     curr = curr->next;
+    free(tmp_entry->directory);
     free(tmp_entry);
   }
   free(path);

@@ -14,9 +14,10 @@ typedef struct path_t {
 typedef struct path_entry_t {
   char* directory;
   struct path_entry_t* next;
+  bool modifiable;
 } path_entry_t;
 
-path_t* path_parse(char* path_str);
+path_t* path_load();
 
 void path_clean(path_t* path);
 
