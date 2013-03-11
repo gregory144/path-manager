@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include <getopt.h>
 
@@ -75,19 +76,27 @@ int main(int argc, char **argv) {
     switch (c) {
 
       case 'a':
-        tmp = malloc(sizeof(node_t));
-        tmp->val = strdup(optarg);
-        print_verbose("Adding: %s\n", tmp->val);
-        tmp->next = dirs_to_add;
-        dirs_to_add = tmp;
+        if (optarg[0] != '/') {
+          fprintf(stderr, "Could not add %s to %s, it must be an absolute path.", optarg, ENV_VAR_NAME);
+        } else {
+          tmp = malloc(sizeof(node_t));
+          tmp->val = strdup(optarg);
+          print_verbose("Adding: %s\n", tmp->val);
+          tmp->next = dirs_to_add;
+          dirs_to_add = tmp;
+        }
         break;
 
       case 'r':
-        tmp = malloc(sizeof(node_t));
-        tmp->val = strdup(optarg);
-        print_verbose("Removing: %s\n", tmp->val);
-        tmp->next = dirs_to_remove;
-        dirs_to_remove = tmp;
+        if (optarg[0] != '/') {
+          fprintf(stderr, "Could not remove %s from %s, it must be an absolute path.", optarg, ENV_VAR_NAME);
+        } else {
+          tmp = malloc(sizeof(node_t));
+          tmp->val = strdup(optarg);
+          print_verbose("Removing: %s\n", tmp->val);
+          tmp->next = dirs_to_remove;
+          dirs_to_remove = tmp;
+        }
         break;
 
       case 's':

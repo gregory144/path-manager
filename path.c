@@ -168,7 +168,6 @@ bool path_save(path_t* path) {
 bool path_add(path_t* path, char* directory) {
   // remove the file if it's already on the path first
   path_rm(path, directory);
-  print_verbose("Adding `%s` to path.\n", directory);
   bool warnings = path_warnings_for_directory(directory);
   path_entry_t* path_entry = path_construct_entry(directory, true);
   path->num_entries++;
@@ -223,7 +222,6 @@ node_t* path_directories(path_t* path) {
   node_t* tail = NULL;
   node_t* curr = NULL;
   for (path_entry = path->head; path_entry; path_entry = path_entry->next) {
-    print_verbose("Found directory: `%s`\n", path_entry->directory);
     curr = malloc(sizeof(node_t));
     curr->val = strdup(path_entry->directory);
     curr->next = NULL;
