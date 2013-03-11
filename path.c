@@ -71,7 +71,6 @@ path_t* path_load(char* env_var_name) {
   if (directory_exists(path_directory)) {
     // TODO must load them in order!
     file_list_t* files = list_directory(path_directory, false);
-    printf("Sorting file list %s\n", files->full_path);
     files = sort_files(files);
 
     file_list_t* curr;
