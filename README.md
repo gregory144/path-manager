@@ -5,6 +5,10 @@ A CLI utility for managing your PATH environment variable
 
 Usage (bash):
 
+Install:
+
+`path -i`
+
 List all directories in your path:
 
 `path`
@@ -24,6 +28,23 @@ Remove a directory from your path:
 Search your path:
 
 `path -s gcc`
+
+COMPATIBILITY
+============
+
+Tested on Linux Mint 13 Maya & Fedora 18 (Spherical Cow)
+GNU bash, version 4.2.24, 4.2.39
+
+BUILDING
+============
+
+Debian/Ubuntu/Mint:
+`sudo apt-get install build-essential`
+`make`
+
+Fedora
+`yum install gcc`
+`make`
 
 TODO
 ============

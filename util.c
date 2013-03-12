@@ -4,9 +4,9 @@
 #include <string.h>
 #include <pwd.h>
 #include <unistd.h>
-#include <fcntl.h>
 #include <errno.h>
 #include <time.h>
+#include <libgen.h>
 
 #include "util.h"
 #include "file.h"
@@ -120,13 +120,17 @@ char* bash_script() {
     struct tm* timestamp = localtime(&ltime);
     char* timestamp_str = asctime(timestamp);
 
+    char* bin_directory = strdup(executable_filename);
+    bin_directory = dirname(bin_directory);
+
     //timestamp_str will include a newline char
-    char* script = "\n# Added by PATH-%s at %s[[ -s \"%s\" ]] && `%s --export`\n";
-    int script_length = strlen(script) + strlen(version) + strlen(timestamp_str) + (strlen(executable_filename) * 2);
+    char* script = "\n# Added by PATH-%s at %s[[ -s \"%s\" ]] && `%s --add %s --export`\n";
+    int script_length = strlen(script) + strlen(version) + strlen(timestamp_str) + (strlen(executable_filename) * 2) + strlen(bin_directory);
     char* script_buf = malloc((script_length + 1) * sizeof(char));
-    sprintf(script_buf, script, version, timestamp_str, executable_filename, executable_filename);
+    sprintf(script_buf, script, version, timestamp_str, executable_filename, executable_filename, bin_directory);
 
     free(executable_filename);
+    free(bin_directory);
 
     return script_buf;
   }
