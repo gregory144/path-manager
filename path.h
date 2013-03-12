@@ -5,6 +5,8 @@
 
 #define PATH_SEPARATOR_CHAR ':'
 
+typedef enum { export_default, export_setenv } export_mode_t;
+
 typedef struct path_t {
   int num_entries;
   struct path_entry_t* head;
@@ -24,6 +26,8 @@ void path_clean(path_t* path);
 bool path_warnings(path_t* path);
 
 bool path_save(path_t* path);
+
+void path_export(path_t* path, char* env_var_name, export_mode_t export_mode);
 
 bool path_add(path_t* path, char* directory);
 

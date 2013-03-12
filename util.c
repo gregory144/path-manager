@@ -64,6 +64,30 @@ char* get_home_directory() {
   return dont_dup ? home : strdup(home);
 }
 
+char* get_cmdline(int argc, char** argv) {
+  int buf_len = 256;
+  int max_len = buf_len - 3;
+  char* buf = calloc(buf_len, sizeof(char));
+  int i;
+  int len_so_far = 0;
+  for (i = 0; i < argc; i++) {
+    char* arg = argv[i];
+    int arg_len = strlen(arg);
+    len_so_far = strlen(buf);
+    if (len_so_far + arg_len <= max_len) {
+      strncat(buf, arg, arg_len);
+      if (i + 1 < argc) {
+        strncat(buf, " ", 1);
+      }
+    } else {
+      strncat(buf, arg, max_len - len_so_far);
+      strncat(buf, "...", 3);
+      break;
+    }
+  }
+  return buf;
+}
+
 char* get_executable_file() {
   return symlink_target("/proc/self/exe");
 }

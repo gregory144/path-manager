@@ -22,7 +22,7 @@ void print_warning(char* s, ...);
 
 char* get_home_directory();
 
-char* get_executable_directory();
+char* get_cmdline(int argc, char** argv);
 
 bool install_in_shell();
 

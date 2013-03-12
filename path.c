@@ -165,6 +165,18 @@ bool path_save(path_t* path) {
   return true;
 }
 
+void path_export(path_t* path, char* env_var_name, export_mode_t export_mode) {
+  char* processed_path = path_to_string(path);
+  char* cmd_name = "export";
+  char* key_value_separator = "=";
+  if (export_mode == export_setenv) {
+    cmd_name = "setenv";
+    key_value_separator = " ";
+  }
+  printf("%s %s%s%s\n", cmd_name, env_var_name, key_value_separator, processed_path);
+  free(processed_path);
+}
+
 bool path_add(path_t* path, char* directory) {
   // remove the file if it's already on the path first
   path_rm(path, directory);
@@ -196,7 +208,11 @@ bool path_rm(path_t* path, char* directory) {
       }
       free(curr->directory);
       free(curr);
-      if (prev) curr = prev;
+      if (prev) {
+        curr = prev;
+      } else {
+        curr = path->head;
+      }
       removed = true;
     }
     prev = curr;

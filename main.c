@@ -14,8 +14,6 @@
 
 typedef enum { print_path, print_export, print_list, print_search, print_quiet } print_mode_t;
 
-typedef enum { export_default, export_setenv } export_mode_t;
-
 // cached copy of all files in the path
 file_list_t* all_files = NULL;
 
@@ -83,7 +81,6 @@ int main(int argc, char **argv) {
           modified = true;
           tmp = malloc(sizeof(node_t));
           tmp->val = strdup(optarg);
-          print_verbose("Adding: %s\n", tmp->val);
           tmp->next = dirs_to_add;
           dirs_to_add = tmp;
         }
@@ -97,7 +94,6 @@ int main(int argc, char **argv) {
           modified = true;
           tmp = malloc(sizeof(node_t));
           tmp->val = strdup(optarg);
-          print_verbose("Removing: %s\n", tmp->val);
           tmp->next = dirs_to_remove;
           dirs_to_remove = tmp;
         }
@@ -168,14 +164,15 @@ int main(int argc, char **argv) {
     node_t* entry;
 
     for (entry = dirs_to_add; entry; entry = entry->next) {
+      print_verbose("Adding `%s` to %s\n", tmp->val, ENV_VAR_NAME);
       int added = path_add(path, entry->val);
       if (!added) {
-        print_warning("Directory `%s` not added to the path due to warnings. Use --force to override.\n", entry->val);
+        print_warning("Directory `%s` not added to %s due to warnings. Use --force to override.\n", entry->val, ENV_VAR_NAME);
       }
     }
 
     for (entry = dirs_to_remove; entry; entry = entry->next) {
-      print_verbose("Removing `%s` from path.\n", entry->val);
+      print_verbose("Removing `%s` from .\n", entry->val, ENV_VAR_NAME);
       path_rm(path, entry->val);
     }
 
@@ -183,6 +180,14 @@ int main(int argc, char **argv) {
 
     if (warnings_are_on()) {
       path_warnings(path);
+    }
+
+    // give a warning if the user doesn't export using command substitution
+    if ((modified || print_mode == print_export) && isatty(fileno(stdout))) {
+      fprintf(stderr, "In order to save %s for the current shell, use command substitution, like:\n", ENV_VAR_NAME);
+      char* orig_cmd = get_cmdline(argc, argv);
+      fprintf(stderr, "`%s`\n", orig_cmd);
+      free(orig_cmd);
     }
 
     switch (print_mode) {
@@ -195,7 +200,7 @@ int main(int argc, char **argv) {
             if (search_result) {
               printf("exact: %s\n", search_result);
             } else {
-              print_warning("`%s` not found in path.\n", entry->val);
+              print_warning("`%s` not found in %s.\n", entry->val, ENV_VAR_NAME);
               match_t* matches = find_best_matches(entry->val, files);
               match_t* curr_match;
               int i;
@@ -216,15 +221,7 @@ int main(int argc, char **argv) {
         }
         break;
       case print_export: {
-          char* processed_path = path_to_string(path);
-          char* cmd_name = "export";
-          char* key_value_separator = "=";
-          if (export_mode == export_setenv) {
-            cmd_name = "setenv";
-            key_value_separator = " ";
-          }
-          printf("%s %s%s%s\n", cmd_name, ENV_VAR_NAME, key_value_separator, processed_path);
-          free(processed_path);
+          path_export(path, ENV_VAR_NAME, export_mode);
         }
         break;
       case print_list: {
