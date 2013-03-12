@@ -1,5 +1,5 @@
 TARGET = path
-LIBS = -lm
+#LIBS = -lm
 CC = gcc
 CFLAGS = -g -Wall
 
