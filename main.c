@@ -186,7 +186,12 @@ int main(int argc, char **argv) {
     if ((modified || print_mode == print_export) && isatty(fileno(stdout))) {
       fprintf(stderr, "In order to save %s for the current shell, use command substitution, like:\n", ENV_VAR_NAME);
       char* orig_cmd = get_cmdline(argc, argv);
-      fprintf(stderr, "`%s`\n", orig_cmd);
+      fprintf(stderr, "`%s", orig_cmd);
+      if (print_mode != print_export) {
+        fprintf(stderr, " -e");
+      }
+      fprintf(stderr, "`\n");
+
       free(orig_cmd);
     }
 
