@@ -5,25 +5,21 @@ A CLI utility for managing your PATH environment variable
 
 Usage (bash):
 
-Add a directory to your path:
+List all directories in your path:
 
-`` `path -a /path/to/directory -e` ``
-
-or
-
-`source <(path -a /path/to/directory -e)`
-
-Remove a directory from your path:
-
-`` `path -r /path/to/directory -e` ``
-
-or
-
-`source <(path -r /path/to/directory -e)`
+`path`
 
 List all files in your path:
 
 `path -l`
+
+Add a directory to your path:
+
+`` `path -a /path/to/directory -e` ``
+
+Remove a directory from your path:
+
+`` `path -r /path/to/directory -e` ``
 
 Search your path:
 
@@ -32,8 +28,6 @@ Search your path:
 TODO
 ============
 
-1. Make global changes (changes that will apply after the current shell
-session has ended)
 1. Add functionality to add a single file to the path (using symbolic link to
 ~/.path/exename -> existing file) instead of a whole directory
 1. Add functionality to manage multiple files of the same name (i.e. promote 1
