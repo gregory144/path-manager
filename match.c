@@ -22,7 +22,7 @@ double best_match_metric(char* a, char* b) {
   int a_index, b_index;
   for (a_index = 0; a_index < a_len - 1; a_index++) {
     for (b_index = 0; b_index < b_len - 1; b_index++) {
-      // doesn't take into account repeated pairs
+      // TODO doesn't take into account repeated pairs
       if (a[a_index] == b[b_index] && a[a_index + 1] == b[b_index + 1]) {
         intersection_size++;
       }
