@@ -10,15 +10,49 @@
 #include "file.h"
 #include "match.h"
 
+#define EXE_NAME "path"
 #define ENV_VAR_NAME "PATH"
 
-typedef enum { print_path, print_export, print_list, print_search, print_quiet } print_mode_t;
+typedef enum { print_path, print_export, print_list, print_search, print_quiet, print_version } print_mode_t;
 
 // cached copy of all files in the path
 file_list_t* all_files = NULL;
 
 void display_usage() {
-  printf("Usage: path\n");
+  printf("\
+Usage: %s [OPTION]...\n\
+   or: `%s -e [--add DIRECTORY|--rm DIRECTORY]`\n\
+", EXE_NAME, EXE_NAME);
+  printf("Display/Search/Modify your %s environment variable.\n", ENV_VAR_NAME);
+  printf("\
+  [no options]           display all entries in your %s (one per line)\n\
+  -a, --add=DIRECTORY    add the given directory to your %s environment\n\
+                           variable\n\
+  -r, --rm=DIRECTORY     remove the given directory from your %s environment\n\
+                           variable\n\
+  -l, --list             list all files in your %s\n\
+  -s, --search=BASENAME  search your %s for the given executable filename;\n\
+                           this will only search the basename (not the whole\n\
+                           absolute path to a file)\n\
+  -e, --export=METHOD    output the command to set the %s environment variable;\n\
+                           METHOD is 'export' (default) or 'setenv'\n\
+  -i, --install          setup bash to save any changes by %s over all future\n\
+                           sessions; searches and modifies the first\n\
+                           interactive and non-interactive bash startup\n\
+                           scripts it can find (ex: .bash_profile, .bashrc)\n\
+  -I, --install-global   setup bash to save any changes by %s over all future\n\
+                           sessions for all users; search and modifies the\n\
+                           first interactive and non-interactive bash startup\n\
+                           scripts it can find (ex: /etc/profile.d,\n\
+                           /etc/bash.bashrc); must have permissions to write\n\
+                           these files\n\
+  -w, --warn             show warnings\n\
+  -q, --quiet            quiet output\n\
+  -v, --version          show version information\n\
+  -h, --help             show this help message\n\
+  --verbose              show verbose output\n\
+", ENV_VAR_NAME, ENV_VAR_NAME, ENV_VAR_NAME, ENV_VAR_NAME, ENV_VAR_NAME, ENV_VAR_NAME,
+    EXE_NAME, EXE_NAME);
   exit(EXIT_FAILURE);
 }
 
@@ -61,10 +95,11 @@ int main(int argc, char **argv) {
       {"install", no_argument,       0, 'i'},
       {"install-global", no_argument,0, 'I'},
       {"list",    no_argument,       0, 'l'},
-      {"verbose", no_argument,       0, 'v'},
       {"warn",    no_argument,       0, 'w'},
       {"quiet",   no_argument,       0, 'q'},
-      {"help",    no_argument,       0, 'h'}
+      {"version", no_argument,       0, 'v'},
+      {"help",    no_argument,       0, 'h'},
+      {"verbose", no_argument,       0,  0  }
     };
 
     c = getopt_long(argc, argv, "-a:r:s:eiIlvwqh?", long_options, &option_index);
@@ -132,8 +167,7 @@ int main(int argc, char **argv) {
         break;
 
       case 'v':
-        turn_verbose_on();
-        turn_warnings_on();
+        print_mode = print_version;
         break;
 
       case 'w':
@@ -142,6 +176,13 @@ int main(int argc, char **argv) {
 
       case 'q':
         print_mode = print_quiet;
+        break;
+
+      case 0:
+        if( strcmp( "verbose", long_options[option_index].name ) == 0 ) {
+          turn_verbose_on();
+          turn_warnings_on();
+        }
         break;
 
       default:
@@ -241,6 +282,9 @@ int main(int argc, char **argv) {
         }
         break;
       case print_quiet:
+        break;
+      case print_version:
+        printf("%s %s\n", EXE_NAME, PATH_VERSION);
         break;
       case print_path:
       default: {
