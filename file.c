@@ -179,9 +179,13 @@ char* symlink_target(char* link) {
   // TODO dynamically allocate buffer for correctness
   int readlink_ret = readlink(link, buf, (buf_size - 1) * sizeof(char));
   if (readlink_ret < sizeof(buf)) {
-    print_warning("Could not find my own directory");
+    print_warning("Could not get symlink target");
   }
   return buf;
+}
+
+char* get_absolute_path(char* relative_path) {
+  return realpath(relative_path, NULL);
 }
 
 bool mkdir_for_user(char* path) {

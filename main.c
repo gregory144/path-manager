@@ -99,7 +99,7 @@ int main(int argc, char **argv) {
       {"quiet",   no_argument,       0, 'q'},
       {"version", no_argument,       0, 'v'},
       {"help",    no_argument,       0, 'h'},
-      {"verbose", no_argument,       0,  0  }
+      {"verbose", no_argument,       0,  0 }
     };
 
     c = getopt_long(argc, argv, "-a:r:s:eiIlvwqh?", long_options, &option_index);
@@ -109,26 +109,28 @@ int main(int argc, char **argv) {
     switch (c) {
 
       case 'a':
-        if (optarg[0] != '/') {
-          fprintf(stderr, "Could not add %s to %s, it must be an absolute path.\n", optarg, ENV_VAR_NAME);
-          failed = true;
-        } else {
+        {
+          char* path = get_absolute_path(optarg);
+          if (!path) {
+            path = strdup(optarg);
+          }
           modified = true;
           tmp = malloc(sizeof(node_t));
-          tmp->val = strdup(optarg);
+          tmp->val = path;
           tmp->next = dirs_to_add;
           dirs_to_add = tmp;
         }
         break;
 
       case 'r':
-        if (optarg[0] != '/') {
-          fprintf(stderr, "Could not remove %s from %s, it must be an absolute path.\n", optarg, ENV_VAR_NAME);
-          failed = true;
-        } else {
+        {
+          char* path = get_absolute_path(optarg);
+          if (!path) {
+            path = strdup(optarg);
+          }
           modified = true;
           tmp = malloc(sizeof(node_t));
-          tmp->val = strdup(optarg);
+          tmp->val = path;
           tmp->next = dirs_to_remove;
           dirs_to_remove = tmp;
         }

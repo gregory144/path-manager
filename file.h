@@ -37,6 +37,8 @@ file_list_t* sort_files(file_list_t* files);
 
 char* symlink_target(char* link);
 
+char* get_absolute_path(char* relative_path);
+
 bool mkdir_for_user(char* path);
 
 bool clear_dir(char* path);
