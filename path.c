@@ -144,20 +144,27 @@ bool path_warnings(path_t* path) {
 bool path_save(path_t* path) {
   char* path_directory = get_path_directory();
   //clear out directory
-  clear_dir(path_directory);
-  mkdir_for_user(path_directory);
-
-  path_entry_t* curr;
-  int i;
-  for (curr = path->head, i = 0; curr; curr = curr->next, i++) {
-    // dont link a file that is already in ~/.path
-    if (curr->modifiable && strncmp(curr->directory, path_directory, strlen(path_directory)) != 0) {
-      char i_buf[50];
-      snprintf(i_buf, 50, "%d", i);
-      char* symlink_filename = file_join(path_directory, i_buf);
-      print_verbose("Linking %s to %s\n", symlink_filename, curr->directory);
-      symlink(curr->directory, symlink_filename);
-      free(symlink_filename);
+  if (!clear_dir(path_directory)) {
+    fprintf(stderr, "Failed to remove directory %s\n", path_directory);
+  } else {
+    if (!mkdir_for_user(path_directory)) {
+      fprintf(stderr, "Failed to create directory %s\n", path_directory);
+    } else {
+      path_entry_t* curr;
+      int i;
+      for (curr = path->head, i = 0; curr; curr = curr->next, i++) {
+        // dont link a file that is already in ~/.path
+        if (curr->modifiable && strncmp(curr->directory, path_directory, strlen(path_directory)) != 0) {
+          char i_buf[50];
+          snprintf(i_buf, 50, "%d", i);
+          char* symlink_filename = file_join(path_directory, i_buf);
+          print_verbose("Linking %s to %s\n", symlink_filename, curr->directory);
+          if (symlink(curr->directory, symlink_filename) != 0) {
+            fprintf(stderr, "Failed to save path entry %s to %s\n", curr->directory, path_directory);
+          }
+          free(symlink_filename);
+        }
+      }
     }
   }
 

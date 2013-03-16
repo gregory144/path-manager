@@ -179,7 +179,7 @@ char* symlink_target(char* link) {
   // TODO dynamically allocate buffer for correctness
   int readlink_ret = readlink(link, buf, (buf_size - 1) * sizeof(char));
   if (readlink_ret < sizeof(buf)) {
-    print_warning("Could not get symlink target");
+    fprintf(stderr, "Could not get symlink target\n");
   }
   return buf;
 }
@@ -200,6 +200,9 @@ static int remove_file_in_walk(const char *fpath, const struct stat *sb, int tfl
 }
 
 bool clear_dir(char* path) {
+  if (!directory_exists(path)) {
+    return true;
+  }
   return nftw(path, remove_file_in_walk, 20, FTW_DEPTH | FTW_PHYS) == 0;
 }
 
