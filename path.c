@@ -220,16 +220,25 @@ bool path_rm(path_t* path, char* directory) {
   return removed;
 }
 
-char* path_search(path_t* path, char* file) {
-  path_entry_t* curr;
-  for (curr = path->head; curr; curr = curr->next) {
-    char* full_file = file_join(curr->directory, file);
+node_t* path_search(path_t* path, char* file) {
+  path_entry_t* path_entry;
+  node_t* head = NULL;
+  node_t* tail = NULL;
+  node_t* curr = NULL;
+  for (path_entry = path->head; path_entry; path_entry = path_entry->next) {
+    char* full_file = file_join(path_entry->directory, file);
     if (file_is_executable(full_file)) {
-      return full_file;
+      curr = malloc(sizeof(node_t));
+      curr->val = full_file;
+      curr->next = NULL;
+      if (!head) head = curr;
+      if (tail) tail->next = curr;
+      tail = curr;
+    } else {
+      free(full_file);
     }
-    free(full_file);
   }
-  return NULL;
+  return head;
 }
 
 node_t* path_directories(path_t* path) {

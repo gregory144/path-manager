@@ -13,7 +13,8 @@
 #define EXE_NAME "path"
 #define ENV_VAR_NAME "PATH"
 
-typedef enum { print_path, print_export, print_list, print_search, print_quiet, print_version } print_mode_t;
+typedef enum { print_path, print_export, print_list, print_search,
+  print_search_exact, print_quiet, print_version } print_mode_t;
 
 // cached copy of all files in the path
 file_list_t* all_files = NULL;
@@ -31,9 +32,12 @@ Usage: %s [OPTION]...\n\
   -r, --rm=DIRECTORY     remove the given directory from your %s environment\n\
                            variable\n\
   -l, --list             list all files in your %s\n\
-  -s, --search=BASENAME  search your %s for the given executable filename;\n\
+  -s, --search=BASENAME  fuzzy search your %s for the given executable filename;\n\
                            this will only search the basename (not the whole\n\
                            absolute path to a file)\n\
+  -E, --exact=BASENAME   search your %s for the exact given executable\n\
+                           filename; this will only search the basename (not\n\
+                           the whole absolute path to a file)\n\
   -e, --export=METHOD    output the command to set the %s environment variable;\n\
                            METHOD is 'export' (default) or 'setenv'\n\
   -i, --install          setup bash to save any changes by %s over all future\n\
@@ -52,7 +56,7 @@ Usage: %s [OPTION]...\n\
   -h, --help             show this help message\n\
   --verbose              show verbose output\n\
 ", ENV_VAR_NAME, ENV_VAR_NAME, ENV_VAR_NAME, ENV_VAR_NAME, ENV_VAR_NAME, ENV_VAR_NAME,
-    EXE_NAME, EXE_NAME);
+    ENV_VAR_NAME, EXE_NAME, EXE_NAME);
   exit(EXIT_FAILURE);
 }
 
@@ -91,6 +95,7 @@ int main(int argc, char **argv) {
       {"add",     required_argument, 0, 'a'},
       {"rm",      required_argument, 0, 'r'},
       {"search",  required_argument, 0, 's'},
+      {"exact",   required_argument, 0, 'E'},
       {"export",  optional_argument, 0, 'e'},
       {"install", no_argument,       0, 'i'},
       {"install-global", no_argument,0, 'I'},
@@ -102,7 +107,7 @@ int main(int argc, char **argv) {
       {"verbose", no_argument,       0,  0 }
     };
 
-    c = getopt_long(argc, argv, "-a:r:s:eiIlvwqh?", long_options, &option_index);
+    c = getopt_long(argc, argv, "-a:r:s:E:eiIlvwqh?", long_options, &option_index);
     if (c == -1)
       break;
 
@@ -138,6 +143,15 @@ int main(int argc, char **argv) {
 
       case 's':
         print_mode = print_search;
+
+        tmp = malloc(sizeof(node_t));
+        tmp->val = strdup(optarg);
+        tmp->next = files_to_search;
+        files_to_search = tmp;
+        break;
+
+      case 'E':
+        print_mode = print_search_exact;
 
         tmp = malloc(sizeof(node_t));
         tmp->val = strdup(optarg);
@@ -240,22 +254,27 @@ int main(int argc, char **argv) {
 
     switch (print_mode) {
       case print_search:
+      case print_search_exact:
         if (files_to_search) {
           file_list_t* files = get_all_files(path);
           for (entry = files_to_search; entry; entry = entry->next) {
             print_verbose("Searching for: `%s`\n", entry->val);
-            char* search_result = path_search(path, entry->val);
-            if (search_result) {
-              printf("exact: %s\n", search_result);
+            if (print_mode == print_search_exact) {
+              node_t* search_result = path_search(path, entry->val);
+
+              for (; search_result; search_result = search_result->next) {
+                printf("%s\n", search_result->val);
+              }
+              free_nodes(search_result);
             } else {
-              print_warning("`%s` not found in %s.\n", entry->val, ENV_VAR_NAME);
               match_t* matches = find_best_matches(entry->val, files);
               match_t* curr_match;
               int i;
               for (i = 0; i < 10; i++) {
                 curr_match = &matches[i];
                 if (curr_match && curr_match->metric > 0.4) {
-                  printf("almost: %s", curr_match->file->full_path);
+                  char* match_type = strcmp(entry->val, curr_match->file->filename) == 0 ? "exact" : "almost";
+                  printf("%s: %s", match_type, curr_match->file->full_path);
                   if (!curr_match->file->executable) {
                     printf(" (not executable)");
                   }
@@ -264,7 +283,6 @@ int main(int argc, char **argv) {
               }
               free(matches);
             }
-            free(search_result);
           }
         }
         break;

@@ -33,7 +33,7 @@ bool path_add(path_t* path, char* directory);
 
 bool path_rm(path_t* path, char* directory);
 
-char* path_search(path_t* path, char* file);
+node_t* path_search(path_t* path, char* file);
 
 node_t* path_directories(path_t* path);
 
