@@ -57,7 +57,6 @@ file to be first in line)
 fuzzy search matches even if exact match is found)
 1. Improve algorithm for fuzzy search
 1. path_search should return a list of files
-1. Handle adding relative paths correctly
 1. Add functionality to detect current shell (using getppid and
 /proc/$pid/cmdline, or getpwuid returns user's default shell)
 1. Add warnings for duplicate executable file names (i.e. a file is on
