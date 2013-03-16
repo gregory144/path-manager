@@ -63,3 +63,5 @@ file of the same name)
 1. Add support for other env variables (MANPATH, COWPATH)
 1. Research options for modifying current shell's path without having to
 use source/backticks 
+1. Add better installer, one that can compile from source and install in
+bash
