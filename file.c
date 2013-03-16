@@ -178,7 +178,7 @@ char* symlink_target(char* link) {
   char* buf = calloc(buf_size, sizeof(char));
   // TODO dynamically allocate buffer for correctness
   int readlink_ret = readlink(link, buf, (buf_size - 1) * sizeof(char));
-  if (readlink_ret < sizeof(buf)) {
+  if (readlink_ret == sizeof(buf) || readlink_ret == 0) {
     fprintf(stderr, "Could not get symlink target\n");
   }
   return buf;
