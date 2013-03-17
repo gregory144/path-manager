@@ -62,6 +62,6 @@ file of the same name)
 1. Add append functionality (add to the end of PATH)
 1. Add support for other env variables (MANPATH, COWPATH)
 1. Research options for modifying current shell's path without having to
-use source/backticks 
+use source/backticks (/dev/path? - device driver, . /dev/path)
 1. Add better installer, one that can compile from source and install in
 bash
