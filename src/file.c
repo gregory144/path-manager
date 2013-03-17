@@ -1,4 +1,5 @@
-#define _XOPEN_SOURCE 500 // for nftw
+/* for nftw */
+#define _XOPEN_SOURCE 500
 
 #include <stdlib.h>
 #include <sys/stat.h>

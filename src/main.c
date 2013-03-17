@@ -5,12 +5,12 @@
 
 #include <getopt.h>
 
+#include "config.h"
 #include "path.h"
 #include "util.h"
 #include "file.h"
 #include "match.h"
 
-#define EXE_NAME "path"
 #define ENV_VAR_NAME "PATH"
 
 typedef enum { print_path, print_export, print_list, print_search,
@@ -23,7 +23,7 @@ void display_usage() {
   printf("\
 Usage: %s [OPTION]...\n\
    or: `%s -e [--add DIRECTORY|--rm DIRECTORY]`\n\
-", EXE_NAME, EXE_NAME);
+", PACKAGE, PACKAGE);
   printf("Display/Search/Modify your %s environment variable.\n", ENV_VAR_NAME);
   printf("\
   [no options]           display all entries in your %s (one per line)\n\
@@ -56,7 +56,7 @@ Usage: %s [OPTION]...\n\
   -h, --help             show this help message\n\
   --verbose              show verbose output\n\
 ", ENV_VAR_NAME, ENV_VAR_NAME, ENV_VAR_NAME, ENV_VAR_NAME, ENV_VAR_NAME, ENV_VAR_NAME,
-    ENV_VAR_NAME, EXE_NAME, EXE_NAME);
+    ENV_VAR_NAME, PACKAGE, PACKAGE);
   exit(EXIT_FAILURE);
 }
 
@@ -304,7 +304,7 @@ int main(int argc, char **argv) {
       case print_quiet:
         break;
       case print_version:
-        printf("%s %s\n", EXE_NAME, PATH_VERSION);
+        printf("%s\n", PACKAGE_STRING);
         break;
       case print_path:
       default: {

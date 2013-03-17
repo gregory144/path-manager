@@ -8,6 +8,7 @@
 #include <time.h>
 #include <libgen.h>
 
+#include "config.h"
 #include "util.h"
 #include "file.h"
 
@@ -110,27 +111,22 @@ int write_script(char* filename, char* script) {
 }
 
 char* bash_script() {
-
   char* executable_filename = get_executable_file();
   if (executable_filename) {
-    char* version = PATH_VERSION;
+    char* version = PACKAGE_STRING;
 
     time_t ltime;
     time(&ltime);
     struct tm* timestamp = localtime(&ltime);
     char* timestamp_str = asctime(timestamp);
 
-    char* bin_directory = strdup(executable_filename);
-    bin_directory = dirname(bin_directory);
-
     //timestamp_str will include a newline char
-    char* script = "\n# Added by PATH-%s at %s[[ -s \"%s\" ]] && `%s --add %s --export`\n";
-    int script_length = strlen(script) + strlen(version) + strlen(timestamp_str) + (strlen(executable_filename) * 2) + strlen(bin_directory);
+    char* script = "\n# Added by %s at %s[[ -s \"%s\" ]] && `%s --export`\n";
+    int script_length = strlen(script) + strlen(version) + strlen(timestamp_str) + (strlen(executable_filename) * 2);
     char* script_buf = malloc((script_length + 1) * sizeof(char));
-    sprintf(script_buf, script, version, timestamp_str, executable_filename, executable_filename, bin_directory);
+    sprintf(script_buf, script, version, timestamp_str, executable_filename, executable_filename);
 
     free(executable_filename);
-    free(bin_directory);
 
     return script_buf;
   }

@@ -1,8 +1,6 @@
 #ifndef UTIL_H
 #define UTIL_H
 
-#define PATH_VERSION "0.1.0"
-
 typedef enum { false, true } bool;
 
 typedef struct node_t {
