@@ -39,12 +39,19 @@ BUILDING
 ============
 
 Debian/Ubuntu/Mint:
-`sudo apt-get install build-essential`
-`make`
+`sudo apt-get install build-essential autoconf automake`
 
 Fedora
-`yum install gcc`
+`yum install gcc autoconf automake`
+
+Then:
+
+`./configure`
 `make`
+
+`make install`
+or
+`sudo make install`
 
 TODO
 ============
