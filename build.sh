@@ -5,3 +5,5 @@ autoreconf --install
 ./configure
 
 make
+
+./bin/path
