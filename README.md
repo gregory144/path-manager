@@ -3,6 +3,9 @@ path-manager
 
 A CLI utility for managing your PATH environment variable
 
+[![Build Status](https://travis-ci.org/gregory144/path-manager.png)](https://travis-ci.org/gregory144/path-manager)
+
+
 Usage (bash):
 
 Install:
