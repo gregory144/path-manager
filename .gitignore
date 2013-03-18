@@ -1,2 +1,20 @@
 path
 *.o
+
+# Autotools
+/autom4te.cache
+/stamp-h1
+Makefile
+/config.status
+/config.log
+/config.h
+/aclocal.m4
+Makefile.in
+/config.h.in
+/configure
+bin/
+/compile
+/depcomp
+/install-sh
+/missing
+src/.deps/
