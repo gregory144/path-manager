@@ -10,7 +10,9 @@ Usage (bash):
 
 Install:
 
-`path -i`
+1. `curl http://path.gtgross.com/install.sh | bash`
+1. Open up a new shell (changes won't apply to your current shell on
+installation): `bash`
 
 List all directories in your path:
 
@@ -77,5 +79,3 @@ file of the same name)
 1. Add support for other env variables (MANPATH, COWPATH)
 1. Research options for modifying current shell's path without having to
 use source/backticks (/dev/path? - device driver, . /dev/path)
-1. Add better installer, one that can compile from source and install in
-bash
